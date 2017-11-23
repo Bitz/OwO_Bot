@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -14,8 +12,9 @@ using OwO_Bot.Models;
 using RedditSharp;
 using RedditSharp.Things;
 using static System.Console;
-using static System.DateTime;
 using static OwO_Bot.Constants;
+using static OwO_Bot.Functions.C;
+using static OwO_Bot.Models.Hashing;
 
 namespace OwO_Bot
 {
@@ -26,7 +25,7 @@ namespace OwO_Bot
             Title = "OwO What's This? Loading bulge...";
             Configuration.Load();
             SetOut(new Writer());
-            WriteLine("Configuration loaded!");
+            C.WriteLine("Configuration loaded!");
             Title = "OwO Bot " + Constants.Version;
 
             int argumentIndex = 0;
@@ -34,29 +33,64 @@ namespace OwO_Bot
             {
                 if (int.TryParse(args[0], out argumentIndex))
                 {
-                    WriteLine("Found valid argument!");
+                    C.WriteLine("Found valid argument!");
                 }
             }
+            BotWebAgent webAgent = new BotWebAgent(
+                Config.reddit.username,
+                Config.reddit.password,
+                Config.reddit.client_id,
+                Config.reddit.secret_id,
+                Config.reddit.callback_url);
+            Reddit reddit = new Reddit(webAgent, true);
 
             if (argumentIndex == -1)
             {
-                WriteLine("Database management mode entered.");
-
-                DbConnector con = new DbConnector();
-                string ss = "SELECT * FROM owo_bot.posts;";
-                var p = new List<SqlParameter>();
-                var r = con.ExecuteDataReader(ss, ref p);
-                //TODO
-                while (r.Read())
+                C.WriteLine("Database management mode entered.");
+                DbPosts dbPosts = new DbPosts();
+                C.WriteLine("Deleteing all Posts older than 30 days...");
+                C.WriteLine($"{dbPosts.DeleteAllPostsOlderThan()} Posts deleted!");
+                List<Post> postsOnReddit = new List<Post>();
+                reddit.LogIn(Config.reddit.username, Config.reddit.password);
+                foreach (configurationSub sub in Config.subreddit_configurations)
                 {
-                    Console.WriteLine($"{r.GetString(0)} {r.GetString(1)} ");
+                    C.WriteLine($"Collecting posts for /r/{sub.subreddit}!");
+                    Subreddit subby = reddit.GetSubreddit(sub.subreddit);
+                    postsOnReddit.AddRange(subby.New.Where(x => !x.IsSelfPost && x.Created >= DateTimeOffset.Now.AddDays(-1)).ToList());
                 }
+
+                List<ImgHash> postsInDb = dbPosts.GetAllIds();
+                
+                //Don't need to process posts that are already hashed in the database!
+                postsOnReddit = postsOnReddit.Where(x => postsInDb.All(d => x.Id != d.PostId)).ToList();
+
+                C.WriteLine($"Found {postsOnReddit.Count} Posts to be added to database.");
+
+                string defaultTitle = Title;
+                int progressCounter = 0;
+                int totalPosts = postsOnReddit.Count;
+                Title = $"{defaultTitle} [{progressCounter}/{totalPosts}]";
+                foreach (var newPost in postsOnReddit)
+                {
+                    WriteNoTime($"Working on {newPost.Id}...");
+                    Stopwatch timer = new Stopwatch();
+                    timer.Start();
+                    ImgHash thisPair = Get.HashPair.FromPost(newPost);
+                    if (thisPair.IsValid)
+                    {
+                        dbPosts.AddPostToDatabase(thisPair);
+                    }
+                    timer.Stop();
+                    WriteNoTime($"Done in {timer.ElapsedMilliseconds}ms!");
+                    Title = progressCounter > totalPosts ? $"{defaultTitle} [DONE!]" : $"{defaultTitle} [{progressCounter}/{totalPosts}]";
+                }
+                C.WriteLine("Database updated!");
                 Environment.Exit(0);
             }
 
             var subConfig = Config.subreddit_configurations[argumentIndex];
 
-            WriteLine($"Running for /r/{subConfig.subreddit}!");
+            C.WriteLine($"Running for /r/{subConfig.subreddit}!");
 
             string saveTags = subConfig.tags;
             WebClient client = new WebClient
@@ -73,59 +107,56 @@ namespace OwO_Bot
 
             if (searchObject.Count == 0)
             {
-                WriteLine("Searching e621 returned no results.");
+                C.WriteLine("Searching e621 returned no results.");
                 Environment.Exit(1);
             }
 
-            BotWebAgent webAgent = new BotWebAgent(
-                Config.reddit.username,
-                Config.reddit.password,
-                Config.reddit.client_id,
-                Config.reddit.secret_id,
-                Config.reddit.callback_url);
-
-            //Create reddit client instance
-            Reddit reddit = new Reddit(webAgent, true);
             //Login to reddit
             reddit.LogIn(Config.reddit.username, Config.reddit.password);
 
             if (reddit.User.FullName.ToLower() != Config.reddit.username.ToLower())
             {
-                WriteLine("Unable to verify login details. Ensure ALL your credentials are correct.");
+                C.WriteLine("Unable to verify login details. Ensure ALL your credentials are correct.");
                 Environment.Exit(2);
             }
             else
             {
-                WriteLine("Logged into Reddit!");
+                C.WriteLine("Logged into Reddit!");
             }
 
             Subreddit subreddit = reddit.GetSubreddit(subConfig.subreddit);
-            WriteLine("Getting most recent posts...");
+            C.WriteLine("Getting most recent posts...");
             List<Post> newPosts =
                 subreddit.New.Where(x => !x.IsSelfPost && x.Created >= DateTimeOffset.Now.AddDays(-1)).ToList();
-            WriteLine($"Grabbed {newPosts.Count} to compare. Converting to bit arrays... (This may take a while)");
-            List<Hashing.ImgHash> HashPairs = new List<Hashing.ImgHash>();
+            C.WriteLine($"Grabbed {newPosts.Count} to compare. Converting to bit arrays... (This may take a while)");
+            List<ImgHash> hashPairs = new List<ImgHash>();
 
-            List<bool> currentImageHash = Get.HashPair.GetHash(searchObject.First().FileUrl);
+            byte[] currentImageHash = Get.HashPair.GetHash(searchObject.First().FileUrl);
             Stopwatch s= new Stopwatch();
             s.Start();
             foreach (var newPost in newPosts)
             {
-                var thisPair = Get.HashPair.FromPost(newPost);
-                HashPairs.Add(thisPair);
+                ImgHash thisPair = Get.HashPair.FromPost(newPost);
+                hashPairs.Add(thisPair);
                 if (thisPair.IsValid)
                 {
-                    double equalElements = currentImageHash.Zip(thisPair.Hash, (i, j) => i == j).Count(eq => eq) / 256.00;
-                    WriteLine(equalElements);
+                    //TODO new method
+                    var equivalence =  Get.HashPair.CalculateSimilarity(currentImageHash, thisPair.ImageHash);
+                    C.WriteLine(equivalence);
                 }
             }
             s.Stop();
 
-            WriteLine($"We got {HashPairs.Count(x => x.IsValid)} hashes calculated in {s.ElapsedMilliseconds}ms.");
+            C.WriteLine($"We got {hashPairs.Count(x => x.IsValid)} hashes calculated in {s.ElapsedMilliseconds}ms.");
 
             
         }
 
+        
+        
+        /// <summary>
+        /// Redirect all output to our logger as well as our default console.
+        /// </summary>
         class Writer : TextWriter
         {
             readonly StreamWriter _logfile = Logging.CreateNew();
@@ -138,24 +169,14 @@ namespace OwO_Bot
 
             public override void WriteLine(string message)
             {
-                _originalOut.WriteLine($"[{Now:hh:mm:sstt}] {message}");
-                _logfile.WriteLine($"[{Now:hh:mm:sstt}] {message}");
+                _originalOut.WriteLine($"{message}");
+                _logfile.WriteLine($"{message}");
             }
 
-            public override void WriteLine(double message)
+            public override void Write(string message)
             {
-               WriteLine(message.ToString(CultureInfo.InvariantCulture));
-            }
-
-
-            public override void WriteLine(float message)
-            {
-                WriteLine(message.ToString(CultureInfo.InvariantCulture));
-            }
-
-            public override void WriteLine(int message)
-            {
-                WriteLine(message.ToString(CultureInfo.InvariantCulture));
+                _originalOut.WriteLine($"{message}");
+                _logfile.WriteLine($"{message}");
             }
 
             public override Encoding Encoding => new ASCIIEncoding();

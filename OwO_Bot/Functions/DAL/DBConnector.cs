@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
 using MySql.Data.MySqlClient;
@@ -41,8 +40,40 @@ namespace OwO_Bot.Functions.DAL
             }
         }
 
+        public int ExecuteNonQuery(string commandText, ref List<MySqlParameter> parameterCollection,
+            bool keepOpen = false)
+        {
+            int affectedRows;
+            MySqlConnection connection = GetConnection();
+            MySqlCommand sqlCommand = new MySqlCommand
+            {
+                Connection = connection,
+                CommandType = CommandType.Text,
+                CommandText = commandText
+            };
+            if (parameterCollection != null)
+            {
+                foreach (MySqlParameter p in parameterCollection.GroupBy(x => x.ParameterName)
+                    .Select(y => y.Last()))
+                {
+                    sqlCommand.Parameters.Add(p);
+                }
+            }
+            using (MySqlTransaction tr = connection.BeginTransaction())
+            {
+                sqlCommand.Transaction = tr;
+                affectedRows = sqlCommand.ExecuteNonQuery();
+                tr.Commit();
+            }
+            if (!keepOpen)
+            {
+                CloseConnection();
+            }
+            return affectedRows;
+        }
 
-        public MySqlDataReader ExecuteDataReader(string commandText, ref List<SqlParameter> parameterCollection)
+
+        public MySqlDataReader ExecuteDataReader(string commandText, ref List<MySqlParameter> parameterCollection)
         {
             MySqlConnection connection = GetConnection();
 
@@ -54,7 +85,7 @@ namespace OwO_Bot.Functions.DAL
             };
             if (parameterCollection != null)
             {
-                foreach (SqlParameter p in parameterCollection.GroupBy(x => x.ParameterName)
+                foreach (MySqlParameter p in parameterCollection.GroupBy(x => x.ParameterName)
                     .Select(y => y.Last()))
                 {
                     sqlCommand.Parameters.Add(p);

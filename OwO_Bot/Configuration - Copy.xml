@@ -1,0 +1,18 @@
+﻿<?xml version="1.0"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <reddit username="aaa" password="aaa" client_id="aaa" secret_id="aaa"
+          callback_url="https://google.com" />
+  <imgur apikey="aaaa" />
+  <gfycat client_id="aaaa" client_secret="a" />
+  <subreddit_configurations>
+    <sub subreddit="yiff"
+         tags="-rating:s date:yesterday order:score"
+         hide="my_little_pony zootopia"
+         sensitive-tags="cub" />
+
+    <sub subreddit="bronyvillers"
+         tags="-rating:s date:yesterday order:score"
+         hide="my_little_pony"
+         sensitive-tags="cub" />
+  </subreddit_configurations>
+</configuration>

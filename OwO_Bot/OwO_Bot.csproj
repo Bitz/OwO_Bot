@@ -47,19 +47,17 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Web" />
-    <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
+    <Compile Include="Functions\C.cs" />
     <Compile Include="Functions\Configuration.cs" />
     <Compile Include="Functions\Convert.cs" />
     <Compile Include="Functions\DAL\DBConnector.cs" />
+    <Compile Include="Functions\DAL\DBPosts.cs" />
     <Compile Include="Functions\Get.cs" />
     <Compile Include="Functions\Logging.cs" />
     <Compile Include="Models\Config.cs" />

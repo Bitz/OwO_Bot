@@ -33,7 +33,7 @@ namespace OwO_Bot.Functions
                 response.PostId = post.Id;
                 if (response.IsValid)
                 {
-                    response.Hash = GetHash(response.Url);
+                    response.ImageHash = GetHash(response.Url);
                 }
                 response.CreatedDate = DateTime.Now;
                 return response;
@@ -99,10 +99,10 @@ namespace OwO_Bot.Functions
                 return o;
             }
 
-            public static List<bool> GetHash(string url)
+            public static byte[] GetHash(string url)
             {
                 //Download the image...
-                List<bool> lResult = new List<bool>();
+                List<byte> lByte = new List<byte>();
                 WebRequest request = WebRequest.Create(url);
                 WebResponse response = request.GetResponse();
 
@@ -116,15 +116,19 @@ namespace OwO_Bot.Functions
                     {
                         for (int i = 0; i < bmpMin.Width; i++)
                         {
-                            //reduce colors to true / false                
-                            lResult.Add(bmpMin.GetPixel(i, j).GetBrightness() < 0.5f);
+                            lByte.Add(bmpMin.GetPixel(i, j).GetBrightness() < 0.5f ? (byte) 0x1 : (byte) 0x0);
                         }
                     }
                 }
-                return lResult;
+                return lByte.ToArray();
             }
 
-
+            public  static double CalculateSimilarity(byte[] image1, byte[] image2)
+            {
+                int equalElements = image1.Zip(image2, (i, j) => i == j).Count(eq => eq);
+                double equivalence = (double)equalElements / Math.Max(image1.Length, image2.Length);
+                return equivalence;
+            }
         }
     }
 }
