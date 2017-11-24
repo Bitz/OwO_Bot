@@ -100,36 +100,6 @@ namespace OwO_Bot.Functions.DAL
             CloseConnection();
         }
 
-        public static List<T> ConvertToList<T>(IDataReader dr, bool keepOpen = false) where T : new()
-        {
-            Type businessEntityType = typeof(T);
-            List<T> ent = new List<T>();
-            Hashtable hashtable = new Hashtable();
-            PropertyInfo[] properties = businessEntityType.GetProperties();
-            foreach (PropertyInfo info in properties)
-            {
-                hashtable[info.Name.ToUpper()] = info;
-            }
-            while (dr.Read())
-            {
-                T newObject = new T();
-                for (int index = 0; index < dr.FieldCount; index++)
-                {
-                    PropertyInfo info = (PropertyInfo)
-                        hashtable[dr.GetName(index).ToUpper()];
-                    if (info != null && info.CanWrite)
-                    {
-                        if (!dr[index].Equals(DBNull.Value))
-                            info.SetValue(newObject, dr[index], null);
-                    }
-                }
-                ent.Add(newObject);
-            }
-            if (!keepOpen)
-            {
-                dr.Close();
-            }
-            return ent;
-        }
+        
 }
 }

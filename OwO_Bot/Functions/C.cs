@@ -11,10 +11,15 @@ namespace OwO_Bot.Functions
 
         public static void Write(object message)
         {
-            Con.WriteLine($"[{Now:hh:mm:sstt}] {message as string}");
+            Con.Write($"[{Now:hh:mm:sstt}] {message as string}");
         }
 
         public static void WriteNoTime(object message)
+        {
+            Con.Write(message as string);
+        }
+
+        public static void WriteLineNoTime(object message)
         {
             Con.WriteLine(message as string);
         }

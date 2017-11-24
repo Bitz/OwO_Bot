@@ -13,7 +13,7 @@ namespace OwO_Bot.Functions
             XmlDocument config = new XmlDocument();
             config.Load(PathToConfig());
             XmlNode node = config.DocumentElement;
-            return Convert.ConvertNode<configuration>(node);
+            return Convert.NodeToClass<configuration>(node);
         }
         
         /// <summary>
