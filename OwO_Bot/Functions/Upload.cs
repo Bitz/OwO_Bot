@@ -17,16 +17,18 @@ namespace OwO_Bot.Functions
     {
         public static void PostToImgur(ref PostRequest model)
         {
+            C.Write("Uploading to Imgur...");
             ImgurClient client = new ImgurClient(Constants.Config.imgur.apikey);
             ImageEndpoint endpoint = new ImageEndpoint(client);
             IImage image = endpoint.UploadImageUrlAsync(model.RequestUrl, null, model.Title, model.Description).Result;
             model.ResultUrl = image.Link;
             model.DeleteHash = image.DeleteHash;
-            //return model;
+            C.WriteLineNoTime("Done!");
         }
 
         public static void PostToGfycat(ref PostRequest model)
         {
+            C.Write("Uploading to Gfycat...");
             string token = GetGfycatToken();
             string text = null;
             if (token.Length > 0)
@@ -90,16 +92,15 @@ namespace OwO_Bot.Functions
                             }
                             else
                             {
-                                Thread.Sleep(500);
+                                Thread.Sleep(50);
                             }
                         }
                     }
                 }
-
-                //request.BeginGetResponse(new AsyncCallback(FinishRequest), request);
+                
             }
             model.ResultUrl = $"https://gfycat.com/{result.gfyname}";
-            //return model;
+            C.WriteLineNoTime("Done!");
         }
 
 

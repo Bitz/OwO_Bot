@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 using static OwO_Bot.Models.Hashing;
 
 namespace OwO_Bot.Functions.DAL
 {
-    class DbPosts
+    class DbPosts : IDisposable
     {
         private readonly DbConnector _con = new DbConnector();
         //Extracted table name in case we move or rename the table; easier to change this way.
@@ -57,5 +58,9 @@ namespace OwO_Bot.Functions.DAL
             return rowsAffected == 1;
         }
 
+        public void Dispose()
+        {
+            _con?.Dispose();
+        }
     }
 }

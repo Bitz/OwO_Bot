@@ -6,16 +6,18 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using Newtonsoft.Json;
-using OwO_Bot.Functions;
-using OwO_Bot.Functions.DAL;
-using OwO_Bot.Models;
 using RedditSharp;
 using RedditSharp.Things;
 using static System.Console;
+using OwO_Bot.Functions;
+using OwO_Bot.Functions.DAL;
+using OwO_Bot.Models;
 using static OwO_Bot.Constants;
-using static OwO_Bot.Functions.C;
+using static OwO_Bot.Functions.Get.RedditPost;
 using static OwO_Bot.Models.E621Search;
 using static OwO_Bot.Models.Hashing;
+using C = OwO_Bot.Functions.C;
+using F = OwO_Bot.Functions;
 
 namespace OwO_Bot
 {
@@ -38,33 +40,44 @@ namespace OwO_Bot
                 }
             }
 
-
             if (argumentIndex == -1)
             {
                 DatabaseManagement();
             }
 
             var subConfig = Config.subreddit_configurations[argumentIndex];
+            WorkingSub = subConfig.subreddit;
 
             C.WriteLine($"Running for /r/{subConfig.subreddit}!");
 
-            string saveTags = subConfig.tags;
+            string saveTags = $"{subConfig.tags} date:{DateTime.Now.AddDays(-1):yyyy-MM-dd}";
             WebClient client = new WebClient
             {
                 Headers = { ["User-Agent"] = $"OwO Bot/{Constants.Version} (by BitzLeon on Reddit)" }
             };
-            string result = client.DownloadString($"https://e621.net/post/index.json?tags={saveTags}&limit=50");
 
-            List<SearchResult> searchObject = JsonConvert.DeserializeObject<List<SearchResult>>(result);
-
-            //Hide tags that we were unable to hide earlier because of the 6 tag limit, generally, things that aren't "furry" per se.
-            string[] hideTags = subConfig.hide.Split(' ');
-            searchObject = searchObject.Where(results => ! hideTags.Any(tagsToHide => results.Tags.Contains(tagsToHide))).ToList();
-
-            if (searchObject.Count == 0)
+            int page = 1;
+            List<SearchResult> searchObject = new List<SearchResult>();
+            List<Blacklist> blacklist;
+            using (DbBlackList dbBlackList = new DbBlackList())
             {
-                C.WriteLine("Searching e621 returned no results.");
-                Environment.Exit(1);
+                blacklist = dbBlackList.GetAllIds();
+            }
+            
+            while (searchObject.Count == 0)
+            {
+                string result = client.DownloadString($"https://e621.net/post/index.json?tags={saveTags}&limit=50&page=" + page);
+                var temp = JsonConvert.DeserializeObject<List<SearchResult>>(result);
+                if (temp != null)
+                {
+                    searchObject.AddRange(temp);
+                    searchObject = searchObject.Distinct().ToList();
+                }
+                //Hide tags that we were unable to hide earlier because of the 6 tag limit, generally, things that aren't "furry" per se.
+                string[] hideTags = subConfig.hide.Split(' ');
+                searchObject = searchObject.Where(results => !hideTags.Any(tagsToHide => results.Tags.Contains(tagsToHide))).ToList();
+                searchObject = searchObject.Where(r => !blacklist.Select(x => x.PostId).Contains(r.Id)).ToList();
+                page++;
             }
             Reddit reddit = Get.Reddit();
 
@@ -73,27 +86,27 @@ namespace OwO_Bot
 
             if (reddit.User.FullName.ToLower() != Config.reddit.username.ToLower())
             {
-                C.WriteLine("Unable to verify login details. Ensure ALL your credentials are correct.");
+                C.WriteLine("Unable to verify Reddit login details. Ensure ALL your credentials are correct.");
                 Environment.Exit(2);
             }
-            else
-            {
-                C.WriteLine("Logged into Reddit!");
-            }
-            C.WriteLine("Getting post IDs from database.");
-            DbPosts dbConnection = new DbPosts();
-            //Get all post Ids from database. We don't want to grb the entire blob yet- those are a bit heavy!
-            List<ImgHash> dbPostIds = dbConnection.GetAllIds();
 
             Subreddit subreddit = reddit.GetSubreddit(subConfig.subreddit);
-            C.WriteLine("Getting most recent posts...");
+            C.WriteLine("Getting most recent posts..."); //2 days back should be fine
             //Get all the posts from reddit.
-            List<Post> newPosts =
-                subreddit.New.Where(x => !x.IsSelfPost && x.Created >= DateTimeOffset.Now.AddDays(-1)).ToList();
+            var newPosts = subreddit.New.Where(x => !x.IsSelfPost && x.Created >= DateTimeOffset.Now.AddDays(-2)).ToList();
+            DbPosts dbConnection = new DbPosts();
+
+            //Clean up old posts. No reason to keep them in here.
+            C.WriteLine($"Deleteing all Posts older than {Config.reddit.Check_Back_X_Days} days...");
+            C.WriteLine($"{dbConnection.DeleteAllPostsOlderThan(Config.reddit.Check_Back_X_Days)} Posts deleted!");
+
+            //Get all post Ids from database. We don't want to grb the entire blob yet- those are a bit heavy!
+            List<ImgHash> dbPostIds = dbConnection.GetAllIds();
             //Remove all intersecting items. If we find it in the database, we don't need to recalculate the hash.
             newPosts = newPosts.Where(x => dbPostIds.All(d => x.Id != d.PostId)).ToList();
+
             C.WriteLine($"Grabbed {newPosts.Count} to compare. Converting to hashes...");
-           
+
             string defaultTitle = Title;
             int progressCounter = 0;
             int totalPosts = newPosts.Count;
@@ -104,13 +117,13 @@ namespace OwO_Bot
                 var timer = new Stopwatch();
                 timer.Start();
                 Write($"Working on {newPost.Id}...");
-                ImgHash thisPair = Get.HashPair.FromPost(newPost);
+                ImgHash thisPair = F.Hashing.FromPost(newPost);
                 if (dbConnection.AddPostToDatabase(thisPair))
                 {
-                    WriteLineNoTime("Added to database...");
+                    C.WriteLineNoTime("Added to database...");
                 }
                 timer.Stop();
-                WriteLineNoTime($"Done in {timer.ElapsedMilliseconds}ms!");
+                C.WriteLineNoTime($"Done in {timer.ElapsedMilliseconds}ms!");
                 Title = progressCounter > totalPosts
                     ? $"{defaultTitle} [DONE!]"
                     : $"{defaultTitle} [{progressCounter}/{totalPosts}]";
@@ -118,31 +131,31 @@ namespace OwO_Bot
             Title = defaultTitle;
 
             List<ImgHash> dbPosts = dbConnection.GetAllValidPosts();
-
-            bool willXPost = false;
+            dbConnection.Dispose(); //Close  the connection. Don't need to keep it open anymore. 
+            dbPosts = dbPosts.Where(x => x.SubReddit.ToLower() == subConfig.subreddit.ToLower()).ToList();
             SearchResult imageToPost = null;
             foreach (SearchResult searchResult in searchObject)
             {
                 bool isUnique = true;
-                byte[] currentImageHash = Get.HashPair.GetHash(searchResult.FileUrl);
+                byte[] currentImageHash = F.Hashing.GetHash(searchResult.FileUrl);
+                
                 foreach (ImgHash imgHash in dbPosts)
                 {
-                    double equivalence = Get.HashPair.CalculateSimilarity(currentImageHash, imgHash.ImageHash);
+                    double equivalence = F.Hashing.CalculateSimilarity(currentImageHash, imgHash.ImageHash);
                     if (equivalence > 0.985)
                     {
-                        C.WriteLine($"Found equivalency of {equivalence:P1}.");
-
                         if (String.Equals(subConfig.subreddit, imgHash.SubReddit, StringComparison.OrdinalIgnoreCase))
                         {
+                            C.WriteLine($"Found equivalency of {equivalence:P1}.");
                             C.WriteLine("Image was posted on this sub already.");
                             isUnique = false;
+                            break;
                         }
-                        else //We found the image posted on another sub. Todo logic for xposting.
+                        else //We found the image posted on another sub. logic for xposting goes here... if we actually want it.
                         {
-                            C.WriteLine("But the image was uploaded to another sub...");
-                            willXPost = true;
+                            //C.WriteLine("But the image was uploaded to another sub...");
+                            //willXPost = true;
                         }
-                        break;
                     }
                 }
                 if (isUnique)
@@ -157,18 +170,23 @@ namespace OwO_Bot
                 C.WriteLine("No image found to post...");
                 Environment.Exit(0);
             }
+            else
+            {
+                C.WriteLine("Found an image to post! Lets start doing things...");
+            }
 
             List<string> pictureExtensions = new List<string>{"jpg", "png", "jpeg"};
             List<string> animationExtensions = new List<string>{"gif", "webm"};
 
+            C.Write("Building title...");
             Misc.PostRequest request = new Misc.PostRequest
             {
-                Title = Get.RedditPost.GenerateTitle(imageToPost),
+                Title = GenerateTitle(imageToPost),
                 Description = imageToPost.Description,
                 RequestUrl = imageToPost.FileUrl,
                 IsNsfw = imageToPost.Rating == "e"
             };
-
+            C.WriteLineNoTime("Done!");
 
             //Upload to either imgur or gyfcat depending on the type.
             if (pictureExtensions.Contains(imageToPost.FileExt))
@@ -179,13 +197,35 @@ namespace OwO_Bot
             {
                 Upload.PostToGfycat(ref request);
             }
+            C.Write("Posting to Reddit...");
             Post post = subreddit.SubmitPost(request.Title, request.ResultUrl);
             if (request.IsNsfw)
             {
                 post.MarkNSFW();
             }
+            C.WriteLineNoTime("Done!");
             request.PostId = post.Id;
             request.DatePosted = DateTime.Now;
+            C.Write("Commenting on Post...");
+            string parsedSource;
+            if (imageToPost.Sources != null && imageToPost.Sources.Count > 0)
+            {
+                parsedSource = $"[Original Source]({imageToPost.Sources.FirstOrDefault()})";
+            }
+            else
+            {
+                parsedSource = "No source provided";
+            }
+            string parsede621Source =  $"[e621 Source](https://e621.net/post/show/{imageToPost.Id})";
+            string comment = $"[](/sweetiecardbot) {parsedSource} | {parsede621Source} " +
+                             "\r\n  \r\n" +
+                             "---" +
+                             "\r\n  \r\n" +
+                             $"This is a bot | [Info](https://bitz.rocks/owo_bot) | [Report problems](/message/compose/?to=BitzLeon&subject={Config.reddit.username} running Derpbot {Constants.Version}) | [Source code](https://github.com/Bitz/OwO_Bot)";
+
+            post.Comment(comment);
+
+            C.WriteLineNoTime("Done!");
         }
 
         /// <summary>
@@ -223,13 +263,13 @@ namespace OwO_Bot
             foreach (var newPost in postsOnReddit)
             {
                 progressCounter++;
-                Write($"Working on {newPost.Id}...");
+                C.Write($"Working on {newPost.Id}...");
                 Stopwatch timer = new Stopwatch();
                 timer.Start();
-                ImgHash thisPair = Get.HashPair.FromPost(newPost);
+                ImgHash thisPair = F.Hashing.FromPost(newPost);
                 dbPosts.AddPostToDatabase(thisPair);
                 timer.Stop();
-                WriteLineNoTime($"Done in {timer.ElapsedMilliseconds}ms!");
+                C.WriteLineNoTime($"Done in {timer.ElapsedMilliseconds}ms!");
                 Title = progressCounter > totalPosts
                     ? $"{defaultTitle} [DONE!]"
                     : $"{defaultTitle} [{progressCounter}/{totalPosts}]";

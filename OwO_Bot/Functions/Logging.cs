@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OwO_Bot.Functions
 {
@@ -24,10 +20,10 @@ namespace OwO_Bot.Functions
 
         public static string PathToLog()
         {
-            string directory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-            if (directory == null) return String.Empty;
-            directory = Path.Combine(directory, "Logs");
-            return directory;
+            string location = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string absoluteCurrentDirectory = Path.GetDirectoryName(location);
+            absoluteCurrentDirectory = Path.Combine(absoluteCurrentDirectory, "Logs");
+            return absoluteCurrentDirectory;
         }
     }
 }

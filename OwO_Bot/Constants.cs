@@ -17,8 +17,14 @@ namespace OwO_Bot
                 Functions.Configuration.Save(value);
             }
         }
+
+        public static string WorkingSub { get; set; }
+
         #endregion Configuration
 
         public static string Version => Assembly.GetEntryAssembly().GetName().Version.ToString();
+
+        //If this value changes, be sure to regenerate ALL entries in the database. 
+        public static int PixelSize => 24;
     }
 }

@@ -53,10 +53,9 @@ namespace OwO_Bot.Functions
 
         public static string PathToConfig()
         {
-            string directory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-            if (directory == null) return String.Empty;
-            directory = Path.Combine(directory, "configuration.xml");
-            return directory;
+            string location = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            string absoluteCurrentDirectory = Path.GetDirectoryName(location);
+            return Path.Combine(absoluteCurrentDirectory, "configuration.xml");
         }
     }
 }

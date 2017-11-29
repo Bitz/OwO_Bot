@@ -1,216 +1,360 @@
 ﻿using System.Xml.Serialization;
 using System;
-using System.Collections.Generic;
 
 namespace OwO_Bot.Models
 {
+   
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
+[System.Xml.Serialization.XmlRootAttribute(Namespace="", IsNullable=false)]
+public partial class configuration {
+    
+    private configurationReddit redditField;
+    
+    private configurationImgur imgurField;
+    
+    private configurationGfycat gfycatField;
+    
+    private configurationMail mailField;
+    
+    private configurationSub[] subreddit_configurationsField;
+    
     /// <remarks/>
-    [SerializableAttribute]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [XmlTypeAttribute(AnonymousType = true)]
-    [XmlRootAttribute(Namespace = "", IsNullable = false)]
-    public partial class configuration
-    {
-
-        private configurationReddit redditField;
-
-        private configurationImgur imgurField;
-
-        private configurationGfycat gfycatField;
-
-        private configurationSub[] subreddit_configurationsField;
-
-        /// <remarks/>
-        public configurationReddit reddit
-        {
-            get => redditField;
-            set => redditField = value;
+    public configurationReddit reddit {
+        get {
+            return this.redditField;
         }
-
-        /// <remarks/>
-        public configurationImgur imgur
-        {
-            get => imgurField;
-            set => imgurField = value;
-        }
-
-        /// <remarks/>
-        public configurationGfycat gfycat
-        {
-            get => gfycatField;
-            set => gfycatField = value;
-        }
-
-        /// <remarks/>
-        [XmlArrayItemAttribute("sub", IsNullable = false)]
-        public configurationSub[] subreddit_configurations
-        {
-            get => subreddit_configurationsField;
-            set => subreddit_configurationsField = value;
+        set {
+            this.redditField = value;
         }
     }
-
+    
     /// <remarks/>
-    [SerializableAttribute]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [XmlTypeAttribute(AnonymousType = true)]
-    public partial class configurationReddit
-    {
-
-        private string usernameField;
-
-        private string passwordField;
-
-        private string client_idField;
-
-        private string secret_idField;
-
-        private string callback_urlField;
-
-        private byte check_Back_X_DaysField;
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string username
-        {
-            get => usernameField;
-            set => usernameField = value;
+    public configurationImgur imgur {
+        get {
+            return this.imgurField;
         }
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string password
-        {
-            get => passwordField;
-            set => passwordField = value;
-        }
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string client_id
-        {
-            get => client_idField;
-            set => client_idField = value;
-        }
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string secret_id
-        {
-            get => secret_idField;
-            set => secret_idField = value;
-        }
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string callback_url
-        {
-            get => callback_urlField;
-            set => callback_urlField = value;
-        }
-
-        /// <remarks/>
-        [XmlAttribute]
-        public byte Check_Back_X_Days
-        {
-            get => check_Back_X_DaysField;
-            set => check_Back_X_DaysField = value;
+        set {
+            this.imgurField = value;
         }
     }
-
+    
     /// <remarks/>
-    [SerializableAttribute]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [XmlTypeAttribute(AnonymousType = true)]
-    public partial class configurationImgur
-    {
-
-        private string apikeyField;
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string apikey
-        {
-            get => apikeyField;
-            set => apikeyField = value;
+    public configurationGfycat gfycat {
+        get {
+            return this.gfycatField;
+        }
+        set {
+            this.gfycatField = value;
         }
     }
-
+    
     /// <remarks/>
-    [SerializableAttribute]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [XmlTypeAttribute(AnonymousType = true)]
-    public partial class configurationGfycat
-    {
-
-        private string client_idField;
-
-        private string client_secretField;
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string client_id
-        {
-            get => client_idField;
-            set => client_idField = value;
+    public configurationMail mail {
+        get {
+            return this.mailField;
         }
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string client_secret
-        {
-            get => client_secretField;
-            set => client_secretField = value;
+        set {
+            this.mailField = value;
         }
     }
-
+    
     /// <remarks/>
-    [SerializableAttribute]
-    [System.ComponentModel.DesignerCategoryAttribute("code")]
-    [XmlTypeAttribute(AnonymousType = true)]
-    public partial class configurationSub
-    {
-
-        private string subredditField;
-
-        private string tagsField;
-
-        private string hideField;
-
-        private string sensitivetagsField;
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string subreddit
-        {
-            get => subredditField;
-            set => subredditField = value;
+    [System.Xml.Serialization.XmlArrayItemAttribute("sub", IsNullable=false)]
+    public configurationSub[] subreddit_configurations {
+        get {
+            return this.subreddit_configurationsField;
         }
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string tags
-        {
-            get => tagsField;
-            set => tagsField = value;
-        }
-
-        /// <remarks/>
-        [XmlAttribute]
-        public string hide
-        {
-            get => hideField;
-            set => hideField = value;
-        }
-
-        /// <remarks/>
-        [XmlAttribute("sensitive-tags")]
-        public string sensitivetags
-        {
-            get => sensitivetagsField;
-            set => sensitivetagsField = value;
+        set {
+            this.subreddit_configurationsField = value;
         }
     }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
+public partial class configurationReddit {
+    
+    private string usernameField;
+    
+    private string passwordField;
+    
+    private string client_idField;
+    
+    private string secret_idField;
+    
+    private string callback_urlField;
+    
+    private byte check_Back_X_DaysField;
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string username {
+        get {
+            return this.usernameField;
+        }
+        set {
+            this.usernameField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string password {
+        get {
+            return this.passwordField;
+        }
+        set {
+            this.passwordField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string client_id {
+        get {
+            return this.client_idField;
+        }
+        set {
+            this.client_idField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string secret_id {
+        get {
+            return this.secret_idField;
+        }
+        set {
+            this.secret_idField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string callback_url {
+        get {
+            return this.callback_urlField;
+        }
+        set {
+            this.callback_urlField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public byte Check_Back_X_Days {
+        get {
+            return this.check_Back_X_DaysField;
+        }
+        set {
+            this.check_Back_X_DaysField = value;
+        }
+    }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
+public partial class configurationImgur {
+    
+    private string apikeyField;
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string apikey {
+        get {
+            return this.apikeyField;
+        }
+        set {
+            this.apikeyField = value;
+        }
+    }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
+public partial class configurationGfycat {
+    
+    private string client_idField;
+    
+    private string client_secretField;
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string client_id {
+        get {
+            return this.client_idField;
+        }
+        set {
+            this.client_idField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string client_secret {
+        get {
+            return this.client_secretField;
+        }
+        set {
+            this.client_secretField = value;
+        }
+    }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
+public partial class configurationMail {
+    
+    private string toField;
+    
+    private string usernameField;
+    
+    private string passwordField;
+    
+    private string incoming_serverField;
+    
+    private ushort incoming_portField;
+    
+    private string outgoing_serverField;
+    
+    private ushort outgoing_portField;
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string to {
+        get {
+            return this.toField;
+        }
+        set {
+            this.toField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string username {
+        get {
+            return this.usernameField;
+        }
+        set {
+            this.usernameField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string password {
+        get {
+            return this.passwordField;
+        }
+        set {
+            this.passwordField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string incoming_server {
+        get {
+            return this.incoming_serverField;
+        }
+        set {
+            this.incoming_serverField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public ushort incoming_port {
+        get {
+            return this.incoming_portField;
+        }
+        set {
+            this.incoming_portField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string outgoing_server {
+        get {
+            return this.outgoing_serverField;
+        }
+        set {
+            this.outgoing_serverField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public ushort outgoing_port {
+        get {
+            return this.outgoing_portField;
+        }
+        set {
+            this.outgoing_portField = value;
+        }
+    }
+}
+
+/// <remarks/>
+[System.SerializableAttribute()]
+[System.ComponentModel.DesignerCategoryAttribute("code")]
+[System.Xml.Serialization.XmlTypeAttribute(AnonymousType=true)]
+public partial class configurationSub {
+    
+    private string subredditField;
+    
+    private string tagsField;
+    
+    private string hideField;
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string subreddit {
+        get {
+            return this.subredditField;
+        }
+        set {
+            this.subredditField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string tags {
+        get {
+            return this.tagsField;
+        }
+        set {
+            this.tagsField = value;
+        }
+    }
+    
+    /// <remarks/>
+    [System.Xml.Serialization.XmlAttributeAttribute()]
+    public string hide {
+        get {
+            return this.hideField;
+        }
+        set {
+            this.hideField = value;
+        }
+    }
+}
+
 
 
 
