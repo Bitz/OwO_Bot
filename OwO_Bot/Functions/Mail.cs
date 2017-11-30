@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Net.Mime;
+using System.Reflection;
 using System.Threading;
 using SysTimer = System.Timers;
 using MailKit;
@@ -85,14 +88,14 @@ namespace OwO_Bot.Functions
                 
                 client.Inbox.MessagesArrived += (sender, e) =>
                 {
-                    C.WriteLine("You got mail!");
+                    C.WriteLineNoTime("You got mail!");
                     done.Cancel();
                 };
-
-                var timer = new SysTimer.Timer {Interval = 600000};
+                //1 Hour and 30 mins.
+                var timer = new SysTimer.Timer {Interval = 5400000 };
                 timer.Elapsed += (sender, e) =>
                 {
-                    C.WriteLine("10 Minutes Passed with no reply...");
+                    C.WriteLine("Time passed with no reply...");
                     Send(search, "Request Cancelled");
                     C.WriteLine("We won't be proceeding with this post...");
 
@@ -126,10 +129,24 @@ namespace OwO_Bot.Functions
 
                         dbBlackList.AddToBlacklist(item);
                         Environment.Exit(0);
+                    } else if (result != null && result.ToLower().ToLower() == "next")
+                    {
+                        C.WriteLine("We won't be proceeding with this post...");
+                        DbBlackList dbBlackList = new DbBlackList();
+                        Blacklist item = new Blacklist
+                        {
+                            Subreddit = WorkingSub,
+                            PostId = postId,
+                            CreatedDate = DateTime.Now
+                        };
+
+                        dbBlackList.AddToBlacklist(item);
+                        Process.Start(Assembly.GetExecutingAssembly().Location);
+                        Environment.Exit(0);
                     }
                     else
                     {
-                        C.WriteLine("We got a title!");
+                        C.WriteLineNoTime("We got a title!");
                     }
                     break;
                 }

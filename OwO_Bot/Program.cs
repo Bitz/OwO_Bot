@@ -94,14 +94,14 @@ namespace OwO_Bot
             C.WriteLine("Getting most recent posts..."); //2 days back should be fine
             //Get all the posts from reddit.
             var newPosts = subreddit.New.Where(x => !x.IsSelfPost && x.Created >= DateTimeOffset.Now.AddDays(-2)).ToList();
-            DbPosts dbConnection = new DbPosts();
+            DbSubredditPosts dbSubredditConnection = new DbSubredditPosts();
 
             //Clean up old posts. No reason to keep them in here.
             C.WriteLine($"Deleteing all Posts older than {Config.reddit.Check_Back_X_Days} days...");
-            C.WriteLine($"{dbConnection.DeleteAllPostsOlderThan(Config.reddit.Check_Back_X_Days)} Posts deleted!");
+            C.WriteLine($"{dbSubredditConnection.DeleteAllPostsOlderThan(Config.reddit.Check_Back_X_Days)} Posts deleted!");
 
             //Get all post Ids from database. We don't want to grb the entire blob yet- those are a bit heavy!
-            List<ImgHash> dbPostIds = dbConnection.GetAllIds();
+            List<ImgHash> dbPostIds = dbSubredditConnection.GetAllIds();
             //Remove all intersecting items. If we find it in the database, we don't need to recalculate the hash.
             newPosts = newPosts.Where(x => dbPostIds.All(d => x.Id != d.PostId)).ToList();
 
@@ -118,7 +118,7 @@ namespace OwO_Bot
                 timer.Start();
                 Write($"Working on {newPost.Id}...");
                 ImgHash thisPair = F.Hashing.FromPost(newPost);
-                if (dbConnection.AddPostToDatabase(thisPair))
+                if (dbSubredditConnection.AddPostToDatabase(thisPair))
                 {
                     C.WriteLineNoTime("Added to database...");
                 }
@@ -130,8 +130,8 @@ namespace OwO_Bot
             }
             Title = defaultTitle;
 
-            List<ImgHash> dbPosts = dbConnection.GetAllValidPosts();
-            dbConnection.Dispose(); //Close  the connection. Don't need to keep it open anymore. 
+            List<ImgHash> dbPosts = dbSubredditConnection.GetAllValidPosts();
+            dbSubredditConnection.Dispose(); //Close  the connection. Don't need to keep it open anymore. 
             dbPosts = dbPosts.Where(x => x.SubReddit.ToLower() == subConfig.subreddit.ToLower()).ToList();
             SearchResult imageToPost = null;
             foreach (SearchResult searchResult in searchObject)
@@ -184,7 +184,9 @@ namespace OwO_Bot
                 Title = GenerateTitle(imageToPost),
                 Description = imageToPost.Description,
                 RequestUrl = imageToPost.FileUrl,
-                IsNsfw = imageToPost.Rating == "e"
+                IsNsfw = imageToPost.Rating == "e",
+                E621Id = imageToPost.Id.ToString(),
+                Subreddit = WorkingSub
             };
             C.WriteLineNoTime("Done!");
 
@@ -204,7 +206,6 @@ namespace OwO_Bot
                 post.MarkNSFW();
             }
             C.WriteLineNoTime("Done!");
-            request.PostId = post.Id;
             request.DatePosted = DateTime.Now;
             C.Write("Commenting on Post...");
             string parsedSource;
@@ -221,9 +222,29 @@ namespace OwO_Bot
                              "\r\n  \r\n" +
                              "---" +
                              "\r\n  \r\n" +
-                             $"This is a bot | [Info](https://bitz.rocks/owo_bot) | [Report problems](/message/compose/?to=BitzLeon&subject={Config.reddit.username} running Derpbot {Constants.Version}) | [Source code](https://github.com/Bitz/OwO_Bot)";
+                             $"This is a bot | [Info](https://bitz.rocks/owo_bot) | [Report problems](/message/compose/?to=BitzLeon&subject={Config.reddit.username} running OwO Bot {Constants.Version}) | [Source code](https://github.com/Bitz/OwO_Bot)";
 
             post.Comment(comment);
+            request.RedditPostId = post.Id;
+
+            Blacklist imageData = new Blacklist
+            {
+                PostId = imageToPost.Id,
+                CreatedDate = DateTime.Now,
+                Subreddit = WorkingSub
+            };
+
+            //instate a reusable connection rather than a 1 off object.
+            using (DbConnector dbConnector = new DbConnector())
+            {
+                //Saved to prevent rechecking.
+                DbBlackList blacklistdb = new DbBlackList(dbConnector);
+                blacklistdb.AddToBlacklist(imageData);
+
+                //Saved for later use maybe.
+                DbPosts dbPostsFinalSave = new DbPosts(dbConnector);
+                dbPostsFinalSave.AddPostToDatabase(request);
+            }
 
             C.WriteLineNoTime("Done!");
         }
@@ -235,9 +256,9 @@ namespace OwO_Bot
         {
             Reddit reddit = Get.Reddit();
             C.WriteLine("Database management mode entered.");
-            DbPosts dbPosts = new DbPosts();
+            DbSubredditPosts dbSubredditPosts = new DbSubredditPosts();
             C.WriteLine($"Deleteing all Posts older than {Config.reddit.Check_Back_X_Days} days...");
-            C.WriteLine($"{dbPosts.DeleteAllPostsOlderThan(Config.reddit.Check_Back_X_Days)} Posts deleted!");
+            C.WriteLine($"{dbSubredditPosts.DeleteAllPostsOlderThan(Config.reddit.Check_Back_X_Days)} Posts deleted!");
             List<Post> postsOnReddit = new List<Post>();
             reddit.LogIn(Config.reddit.username, Config.reddit.password);
             foreach (configurationSub sub in Config.subreddit_configurations)
@@ -249,7 +270,7 @@ namespace OwO_Bot
                     .ToList());
             }
 
-            List<ImgHash> postsInDb = dbPosts.GetAllIds();
+            List<ImgHash> postsInDb = dbSubredditPosts.GetAllIds();
 
             //Don't need to process posts that are already hashed in the database!
             postsOnReddit = postsOnReddit.Where(x => postsInDb.All(d => x.Id != d.PostId)).ToList();
@@ -267,7 +288,7 @@ namespace OwO_Bot
                 Stopwatch timer = new Stopwatch();
                 timer.Start();
                 ImgHash thisPair = F.Hashing.FromPost(newPost);
-                dbPosts.AddPostToDatabase(thisPair);
+                dbSubredditPosts.AddPostToDatabase(thisPair);
                 timer.Stop();
                 C.WriteLineNoTime($"Done in {timer.ElapsedMilliseconds}ms!");
                 Title = progressCounter > totalPosts

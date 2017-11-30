@@ -1,41 +1,45 @@
 ﻿using System;
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
-using OwO_Bot.Models;
+using static OwO_Bot.Models.Hashing;
 
 namespace OwO_Bot.Functions.DAL
 {
-    class DbBlackList : IDisposable
+    class DbSubredditPosts : IDisposable
     {
         private readonly DbConnector _con;
         //Extracted table name in case we move or rename the table; easier to change this way.
-        private string _table = "owo_bot.blacklist";
+        private string _table = "owo_bot.subreddit_posts";
 
-        public DbBlackList(DbConnector connection)
+        public DbSubredditPosts(DbConnector connection)
         {
             _con = connection;
         }
 
-        public DbBlackList()
+        public DbSubredditPosts()
         {
             _con = new DbConnector();
         }
 
-        public List<Blacklist> GetAllIds(string subreddit = "")
+        public List<ImgHash> GetAllIds()
         {
-            string whereString = "";
+            string ss = $"SELECT PostID FROM {_table};";
             var p = new List<MySqlParameter>();
-            if (!string.IsNullOrEmpty(subreddit))
-            {
-                p.Add(new MySqlParameter("?SubReddit", subreddit));
-                whereString = "WHERE SubReddit = ?SubReddit;";
-            }
-
-            string ss = $"SELECT PostID FROM {_table} {whereString}";
             MySqlDataReader r = _con.ExecuteDataReader(ss, ref p);
             using (r)
             {
-                return Convert.ReaderToList<Blacklist>(r);
+                return Convert.ReaderToList<ImgHash>(r);
+            }
+        }
+
+        public List<ImgHash> GetAllValidPosts()
+        {
+            string ss = $"SELECT PostID, ImageHash, SubReddit FROM {_table} WHERE IsValid = 1;";
+            var p = new List<MySqlParameter>();
+            MySqlDataReader r = _con.ExecuteDataReader(ss, ref p);
+            using (r)
+            {
+                return Convert.ReaderToList<ImgHash>(r, true);
             }
         }
 
@@ -46,16 +50,18 @@ namespace OwO_Bot.Functions.DAL
             return _con.ExecuteNonQuery(ss, ref parameters);
         }
 
-        public bool AddToBlacklist(Blacklist imageData)
+        public bool AddPostToDatabase(ImgHash imageData)
         {
             string ss = $"INSERT INTO {_table} " +
-                        "(PostID, SubReddit, CreatedDate) VALUES " +
-                        "(?PostId, ?SubReddit, ?CreatedDate);";
+                        "(PostID, ImageHash, SubReddit, CreatedDate, IsValid) VALUES" +
+                        "(?PostId, ?Hash, ?SubReddit, ?CreatedDate, ?IsValid);";
             List<MySqlParameter> parameters = new List<MySqlParameter>
             {
                 new MySqlParameter("?PostId", imageData.PostId),
-                new MySqlParameter("?SubReddit", imageData.Subreddit),
+                new MySqlParameter("?Hash", imageData.ImageHash),
+                new MySqlParameter("?SubReddit", imageData.SubReddit),
                 new MySqlParameter("?CreatedDate", imageData.CreatedDate),
+                new MySqlParameter("?IsValid", imageData.IsValid),
             };
             var rowsAffected = _con.ExecuteNonQuery(ss, ref parameters);
 
