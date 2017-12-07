@@ -75,6 +75,7 @@ namespace OwO_Bot.Functions
             public static string GenerateTitle(E621Search.SearchResult image, string additionalString = "")
             {
                 string artistString = "Unknown Artist";
+                image.Artist.Remove("conditional_dnp");
                 if (image.Artist != null)
                 {
                     artistString = image.Artist.Count == 0 ? "Unknown" : string.Join(" + ", image.Artist.Select(
@@ -84,11 +85,11 @@ namespace OwO_Bot.Functions
                 Dictionary<string, string> genderLetterPairings =
                     new Dictionary<string, string>
                     {
-                        {"ambiguous_gender", "A"},
+                       //{"ambiguous_gender", "A"},
                         {"male", "M"},
                         {"dickgirl", "D"},
                         {"cuntboy", "C"},
-                        {"intersex", "I"},
+                       // {"intersex", "I"},
                         {"female", "F"},
                         {"maleherm", "H"},
                         {"herm", "H"},
@@ -119,7 +120,17 @@ namespace OwO_Bot.Functions
                     }
                 }
 
-                string genderGroupings = genderList.Count == 0 ? "MF" : string.Join(" ", genderList);
+                string genderGroupings;
+
+                if (genderList.Count == 2)
+                {
+                    genderGroupings = string.Join("", genderList);
+                }
+                else
+                {
+                    genderGroupings = genderList.Count == 0 ? "MF" : string.Join(" ", genderList);
+                }
+
 
                 string mainTitle = MainTitle(image);
 

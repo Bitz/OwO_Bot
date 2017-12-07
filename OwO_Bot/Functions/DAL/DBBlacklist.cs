@@ -21,7 +21,7 @@ namespace OwO_Bot.Functions.DAL
             _con = new DbConnector();
         }
 
-        public List<Blacklist> GetAllIds(string subreddit = "")
+        public List<Blacklist> GetAllIds(string subreddit)
         {
             string whereString = "";
             var p = new List<MySqlParameter>();

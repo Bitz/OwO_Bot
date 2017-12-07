@@ -61,12 +61,22 @@ namespace OwO_Bot
             List<Blacklist> blacklist;
             using (DbBlackList dbBlackList = new DbBlackList())
             {
-                blacklist = dbBlackList.GetAllIds();
+                blacklist = dbBlackList.GetAllIds(WorkingSub);
             }
             
             while (searchObject.Count == 0)
             {
-                string result = client.DownloadString($"https://e621.net/post/index.json?tags={saveTags}&limit=50&page=" + page);
+                string result = string.Empty;
+                try
+                {
+                    result = client.DownloadString($"https://e621.net/post/index.json?tags={saveTags}&limit=50&page=" + page);
+
+                }
+                catch (WebException)
+                {
+                    C.WriteLine("No search results found.");
+                    Environment.Exit(2);
+                }
                 var temp = JsonConvert.DeserializeObject<List<SearchResult>>(result);
                 if (temp != null)
                 {
