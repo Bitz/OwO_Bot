@@ -49,6 +49,9 @@
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>owo_bot_logo.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="BouncyCastle.Crypto, Version=1.8.1.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
       <HintPath>..\packages\BouncyCastle.1.8.1\lib\BouncyCastle.Crypto.dll</HintPath>
@@ -86,12 +89,13 @@
     <Compile Include="Functions\C.cs" />
     <Compile Include="Functions\Configuration.cs" />
     <Compile Include="Functions\Convert.cs" />
-    <Compile Include="Functions\DAL\DBConnector.cs" />
+    <Compile Include="Functions\DAL\_DBConnector.cs" />
     <Compile Include="Functions\DAL\DBBlacklist.cs" />
     <Compile Include="Functions\DAL\DBSubredditPosts.cs" />
     <Compile Include="Functions\DAL\DBPosts.cs" />
     <Compile Include="Functions\Get.cs" />
     <Compile Include="Functions\Hashing.cs" />
+    <Compile Include="Functions\Html.cs" />
     <Compile Include="Functions\Logging.cs" />
     <Compile Include="Functions\Mail.cs" />
     <Compile Include="Functions\Upload.cs" />
@@ -110,6 +114,7 @@
     <Content Include="ffmpeg.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="owo_bot_logo.ico" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -4,7 +4,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
-using HtmlAgilityPack;
 using RedditSharp.Things;
 
 namespace OwO_Bot.Functions
@@ -20,9 +19,8 @@ namespace OwO_Bot.Functions
             string extension = Path.GetExtension(path);
             string returnUrl = GoodExtensions.Any(x => x.Equals(extension) && !String.IsNullOrEmpty(extension))
                 ? post.Url.ToString()
-                : GetOg(post.Url.ToString());
-            Uri test;
-            response.IsValid = Uri.TryCreate(returnUrl, UriKind.Absolute, out test) &&
+                : Html.GetOg(post.Url.ToString());
+            response.IsValid = Uri.TryCreate(returnUrl, UriKind.Absolute, out var test) &&
                                (test.Scheme == Uri.UriSchemeHttp || test.Scheme == Uri.UriSchemeHttps);
             response.Url = returnUrl;
             response.PostId = post.Id;
@@ -34,48 +32,6 @@ namespace OwO_Bot.Functions
             response.CreatedDate = DateTime.Now;
             return response;
         }
-
-        public static string GetOg(string url)
-        {
-            //Handle edge cases
-            if (url.Contains("mobile.twitter.com"))
-            {
-                url = url.Replace("mobile.", String.Empty);
-            }
-
-            if (url.Contains("tumblr.com/image/"))
-            {
-                url = url.Replace("/image/", "/post/");
-            }
-
-            string resultUrl = "";
-            string html = Get.FetchHtml(url);
-            HtmlDocument doc = new HtmlDocument();
-            doc.LoadHtml(html);
-            HtmlNodeCollection list = doc.DocumentNode.SelectNodes("//meta");
-            if (list == null) return string.Empty;
-            try
-            {
-                List<HtmlNode> ogImageNodes = list
-                    .Where(x => x.Attributes["property"]?.Value == "og:image" &&
-                                x.Attributes["property"].Value != null).ToList();
-                //Prefer any format vs gif
-                var first = ogImageNodes.First(x => x.Attributes["content"].Value.EndsWith(".jpg")
-                                                    || x.Attributes["content"].Value.EndsWith(".jpeg")
-                                                    || x.Attributes["content"].Value.EndsWith(".png"));
-                resultUrl = first != null
-                    ? first.Attributes["content"].Value
-                    : ogImageNodes.First().Attributes["content"].Value;
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-
-            return resultUrl;
-        }
-
-
 
         public static byte[] GetHash(string url)
         {

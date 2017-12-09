@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Reflection;
 using MySql.Data.MySqlClient;
 
 namespace OwO_Bot.Functions.DAL

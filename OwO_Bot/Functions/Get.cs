@@ -5,9 +5,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading;
-using HtmlAgilityPack;
 using OwO_Bot.Models;
 using RedditSharp;
 using static System.Reflection.Assembly;
@@ -150,39 +148,22 @@ namespace OwO_Bot.Functions
                 {
                     try //Lots can go wrong here, but it should not break anything. If anything here fails, continue on asking the user for a title.
                     {
-                        Uri myUri = new Uri(imageSource);
-                        string host = myUri.Host;
-                        if (host.Contains("furaffinity.net") && imageSource.Contains("/view/"))
+                        if (imageSource.Contains("furaffinity.net") && imageSource.Contains("/view/"))
                         {
-                            returnedTitle = GetTitle(imageSource);
-                            var firstOrDefault = returnedTitle.Split(new[] { " by " }, StringSplitOptions.None)
-                                .FirstOrDefault();
-                            if (firstOrDefault != null)
-                            {
-                                returnedTitle = firstOrDefault.Trim();
-                            }
+                            returnedTitle = Html.Title.GetTitle(imageSource);
+                            returnedTitle = Html.Title.SplitBy(returnedTitle);
                             break;
                         }
-                        if (host.Contains("inkbunny.net") && imageSource.Contains("/s/"))
+                        if (imageSource.Contains("inkbunny.net") && imageSource.Contains("/s/"))
                         {
-                            returnedTitle = GetTitle(imageSource);
-                            var firstOrDefault = returnedTitle.Split(new[] { " by " }, StringSplitOptions.None)
-                                .FirstOrDefault();
-                            if (firstOrDefault != null)
-                            {
-                                returnedTitle = firstOrDefault.Trim();
-                            }
+                            returnedTitle = Html.Title.GetTitle(imageSource);
+                            returnedTitle = Html.Title.SplitBy(returnedTitle);
                             break;
                         }
-                        if (host.Contains("deviantart.com") && imageSource.Contains("/art/"))
+                        if (imageSource.Contains("deviantart.com") && imageSource.Contains("/art/"))
                         {
-                            returnedTitle = GetTitle(imageSource);
-                            var firstOrDefault = returnedTitle.Split(new[] { " by " }, StringSplitOptions.None)
-                                .FirstOrDefault();
-                            if (firstOrDefault != null)
-                            {
-                                returnedTitle = firstOrDefault.Trim();
-                            }
+                            returnedTitle = Html.Title.GetTitle(imageSource);
+                            returnedTitle = Html.Title.SplitBy(returnedTitle);
                             break;
                         }
                     }
@@ -196,14 +177,17 @@ namespace OwO_Bot.Functions
             //If we find any of these things in the title, we are still going to send the email because we consider the title "bad"
             List<string> unapprovedTitleElements = new List<string> {
                 "commission" ,
+                "comm",
+                "ych",
+                "character",
+                "page", "pg",
                 "/", "\\",
                 "(", ")",
                 "[", "]",
                 ":", ";",
-                "ych",
-                "character",
-                "page", "pg",
-                "|"
+                "|", "#",
+                "&", "<",
+                ">"
             };
 
             if (!string.IsNullOrEmpty(returnedTitle) && ! unapprovedTitleElements.Any(x => returnedTitle.ToLower().Contains(x)))
@@ -250,38 +234,13 @@ namespace OwO_Bot.Functions
             return textInfo.ToTitleCase(s);
         }
 
-        public static string FetchHtml(string url)
-        {
-            string o = "";
-
-            try
-            {
-                HttpWebRequest oReq = (HttpWebRequest)WebRequest.Create(url);
-                oReq.UserAgent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
-                HttpWebResponse resp = (HttpWebResponse)oReq.GetResponse();
-                Stream stream = resp.GetResponseStream();
-                if (stream != null)
-                {
-                    StreamReader reader = new StreamReader(stream);
-                    o = reader.ReadToEnd();
-                }
-            }
-            catch (Exception)
-            {
-                // ignored
-            }
-
-            return o;
-        }
+       
 
 
-        public static string GetTitle(string url)
-        {
-            string html = FetchHtml(url);
-            HtmlDocument doc = new HtmlDocument();
-            doc.LoadHtml(html);
-            HtmlNode firstOrDefault = doc.DocumentNode.Descendants("title").FirstOrDefault();
-            return firstOrDefault != null ? firstOrDefault.InnerHtml : string.Empty;
-        }
+
+        
+
+
+        
     }
 }
