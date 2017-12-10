@@ -40,6 +40,24 @@ namespace OwO_Bot
                 }
             }
 
+            #region Temporary method for populating database with titles.
+            //using (DbPosts p = new DbPosts())
+            //{
+            //    var allPosts = p.GetAllPosts();
+
+                
+            //    foreach (Misc.PostRequest s in allPosts)
+            //    {
+            //        if (string.IsNullOrEmpty(s.Title))
+            //        {
+            //            var redd = Get.Reddit();
+            //            Post sss = (Post)redd.GetThingByFullname($"t3_{s.RedditPostId}");
+            //            p.SetTitle(s.E621Id, sss.Title);
+            //        }
+            //    }
+            //}
+            #endregion
+
             if (argumentIndex == -1)
             {
                 DatabaseManagement();
@@ -84,7 +102,9 @@ namespace OwO_Bot
                     searchObject = searchObject.Distinct().ToList();
                 }
                 //Hide tags that we were unable to hide earlier because of the 6 tag limit, generally, things that aren't "furry" per se.
-                string[] hideTags = subConfig.hide.Split(' ');
+                string[] hideTags = subConfig.hide.Split(' ').Select(x => x.Trim())
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .ToArray();
                 searchObject = searchObject.Where(results => !hideTags.Any(tagsToHide => results.Tags.Contains(tagsToHide))).ToList();
                 searchObject = searchObject.Where(r => !blacklist.Select(x => x.PostId).Contains(r.Id)).ToList();
                 page++;
@@ -195,7 +215,7 @@ namespace OwO_Bot
                 Description = imageToPost.Description,
                 RequestUrl = imageToPost.FileUrl,
                 IsNsfw = imageToPost.Rating == "e",
-                E621Id = imageToPost.Id.ToString(),
+                E621Id = imageToPost.Id,
                 Subreddit = WorkingSub
             };
             C.WriteLineNoTime("Done!");

@@ -10,7 +10,7 @@ namespace OwO_Bot.Models
             public string RequestUrl { get; set; }
             public string Title { get; set; }
             public string Description { get; set; }
-            public string E621Id { get; set; }
+            public long E621Id { get; set; }
             public string ResultUrl { get; set; }
             public string DeleteHash { get; set; }
             public string RedditPostId { get; set; }

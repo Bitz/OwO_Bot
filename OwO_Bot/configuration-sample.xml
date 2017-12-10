@@ -1,0 +1,17 @@
+﻿<?xml version="1.0"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <database connectionString ="A" />
+  <reddit username="A" password="A" client_id="A" secret_id="A"
+          callback_url="https://google.com" Check_Back_X_Days="30" />
+  <imgur apikey="A"/>
+  <gfycat client_id="A" client_secret="A" />
+  <mail to="A" username="A" password="A" 
+        incoming_server="imap.gmail.com" incoming_port="993"
+        outgoing_server="smtp.gmail.com" outgoing_port="465"/> 
+  <subreddit_configurations>
+    <sub subreddit="yiff"
+         tags="-rating:s order:score -comic"
+         hide="" 
+    />
+  </subreddit_configurations>
+</configuration>

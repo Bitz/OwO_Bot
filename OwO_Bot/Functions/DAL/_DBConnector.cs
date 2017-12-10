@@ -10,17 +10,11 @@ namespace OwO_Bot.Functions.DAL
     {
         MySqlConnection _sqlConnection;
 
-        private string GetConnectionString()
-        {
-            return System.Configuration.ConfigurationManager.
-                ConnectionStrings["Test"].ConnectionString;
-        }
-
         private MySqlConnection GetConnection()
         {
             if (_sqlConnection == null)
             {
-                _sqlConnection = new MySqlConnection(GetConnectionString());
+                _sqlConnection = new MySqlConnection(Constants.Config.database.connectionString);
             }
             if (_sqlConnection.State != ConnectionState.Open)
             {
@@ -97,7 +91,5 @@ namespace OwO_Bot.Functions.DAL
         {
             CloseConnection();
         }
-
-        
-}
+    }
 }

@@ -260,5 +260,4 @@ paket-files/
 __pycache__/
 *.pyc
 
-Configuration.xml
-App.config
+configuration.xml

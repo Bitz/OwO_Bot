@@ -6,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using OwO_Bot.Functions.DAL;
 using OwO_Bot.Models;
 using RedditSharp;
 using static System.Reflection.Assembly;
@@ -47,6 +48,8 @@ namespace OwO_Bot.Functions
         }
 
 
+
+
         public static Reddit Reddit()
         {
             BotWebAgent webAgent = new BotWebAgent(
@@ -72,6 +75,19 @@ namespace OwO_Bot.Functions
 
             public static string GenerateTitle(E621Search.SearchResult image, string additionalString = "")
             {
+                //Try to look up the title in the database, to see if we used it before.
+
+                string dbTitle;
+                using (DbPosts dbcPosts = new DbPosts())
+                {
+                    dbTitle = dbcPosts.GetTitle(image.Id);
+                }
+
+                if (!string.IsNullOrEmpty(dbTitle))
+                {
+                    return dbTitle;
+                }
+
                 string artistString = "Unknown Artist";
                 image.Artist.Remove("conditional_dnp");
                 if (image.Artist != null)
@@ -148,7 +164,7 @@ namespace OwO_Bot.Functions
                 {
                     try //Lots can go wrong here, but it should not break anything. If anything here fails, continue on asking the user for a title.
                     {
-                        if (imageSource.Contains("furaffinity.net") && imageSource.Contains("/view/"))
+                        if (imageSource.Contains("furaffinity.net") && (imageSource.Contains("/view/") || imageSource.Contains("/full/")))
                         {
                             returnedTitle = Html.Title.GetTitle(imageSource);
                             returnedTitle = Html.Title.SplitBy(returnedTitle);
