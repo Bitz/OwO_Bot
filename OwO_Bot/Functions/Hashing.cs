@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Net;
 using RedditSharp.Things;
 
 namespace OwO_Bot.Functions
@@ -38,17 +37,14 @@ namespace OwO_Bot.Functions
             //Download the image...
             List<byte> lByte = new List<byte>();
             Image image;
-            if (Path.GetExtension(url) == ".gif" || Path.GetExtension(url) == ".webm")
+            if (Path.GetExtension(url) == ".webm" || Path.GetExtension(url) == ".gif" ) 
             {
-                image = Get.Thumbnail(url);
+                image = Html.GetVideoFirstFrameFromUrl(url);
             }
             else
             {
                 //11% faster to do it this way, so when possible, use this method to generate thumbs instead.
-                WebRequest request = WebRequest.Create(url);
-                WebResponse response = request.GetResponse();
-                Stream responseStream = response.GetResponseStream();
-                image = Image.FromStream(responseStream);
+                image = Html.GetImageFromUrl(url);
             }
             Bitmap bmpMin = new Bitmap(image, new Size(Constants.PixelSize, Constants.PixelSize));
             for (int j = 0; j < bmpMin.Height; j++)
@@ -61,6 +57,8 @@ namespace OwO_Bot.Functions
 
             return lByte.ToArray();
         }
+
+        
 
         public static double CalculateSimilarity(byte[] image1, byte[] image2)
         {

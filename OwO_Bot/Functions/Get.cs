@@ -1,55 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
-using OwO_Bot.Functions.DAL;
 using OwO_Bot.Models;
 using RedditSharp;
-using static System.Reflection.Assembly;
 using static OwO_Bot.Constants;
 
 namespace OwO_Bot.Functions
 {
     class Get
     {
-        public static Image Thumbnail(string video)
-        {
-            C.WriteNoTime("Converting image with ffmpeg...");
-            string location = GetExecutingAssembly().Location;
-            string absoluteCurrentDirectory = Path.GetDirectoryName(location);
-            string thumbLocation = Path.Combine(absoluteCurrentDirectory, "temp.png");
-            string ffmpegLocation = Path.Combine(absoluteCurrentDirectory, "ffmpeg.exe");
-            var cmd = $"-loglevel quiet -y -i \"{video}\" -vframes 1 -s {PixelSize}x{PixelSize} \"{thumbLocation}\"";
-            var calculatedffmpegPath = IsRunningOnMono() ? "/usr/bin/ffmpeg" : ffmpegLocation;
-            var startInfo = new ProcessStartInfo
-            {
-                WindowStyle = ProcessWindowStyle.Hidden,
-                CreateNoWindow = true,
-                FileName = calculatedffmpegPath,
-                Arguments = cmd
-            };
-            var process = new Process
-            {
-                StartInfo = startInfo
-            };
-
-            process.Start();
-
-            while (!process.HasExited)
-            {
-                process.WaitForExit(100);
-            }
-            C.WriteLineNoTime("Done!");
-            return Image.FromFile(thumbLocation);
-        }
-
-
-
-
         public static Reddit Reddit()
         {
             BotWebAgent webAgent = new BotWebAgent(
@@ -75,19 +36,6 @@ namespace OwO_Bot.Functions
 
             public static string GenerateTitle(E621Search.SearchResult image, string additionalString = "")
             {
-                //Try to look up the title in the database, to see if we used it before.
-
-                string dbTitle;
-                using (DbPosts dbcPosts = new DbPosts())
-                {
-                    dbTitle = dbcPosts.GetTitle(image.Id);
-                }
-
-                if (!string.IsNullOrEmpty(dbTitle))
-                {
-                    return dbTitle;
-                }
-
                 string artistString = "Unknown Artist";
                 image.Artist.Remove("conditional_dnp");
                 if (image.Artist != null)
@@ -110,7 +58,11 @@ namespace OwO_Bot.Functions
                         {"tentacles", "T"}
                     };
                 List<string> genderList = new List<string>();
-                List<string> tags = image.Tags.ToLower().Split(' ').Where(x => x.Contains("/") || genderLetterPairings.ContainsKey(x)).ToList();
+                List<string> tags = image.Tags.ToLower().Split(' ')
+                    .Where(x => x.Contains("/") || genderLetterPairings.ContainsKey(x) 
+                    && !x.Contains("intersex")
+                    && !x.Contains("ambiguous_gender")
+                    ).ToList();
 
                 foreach (var tag in tags)
                 {
@@ -148,7 +100,7 @@ namespace OwO_Bot.Functions
 
                 string mainTitle = MainTitle(image);
 
-                string result = $"{mainTitle} [{genderGroupings}] ({artistString}) {additionalString}";
+                string result = $"{ToTitleCase(mainTitle)} [{genderGroupings}] ({artistString}) {additionalString}";
 
                 return result.Trim();
             }

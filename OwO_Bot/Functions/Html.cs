@@ -1,14 +1,59 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using HtmlAgilityPack;
+using static System.Reflection.Assembly;
+using static OwO_Bot.Constants;
+using static OwO_Bot.Functions.Get;
 
 namespace OwO_Bot.Functions
 {
     class Html
     {
+        public static Image GetImageFromUrl(string url)
+        {
+            WebRequest request = WebRequest.Create(url);
+            WebResponse response = request.GetResponse();
+            Stream responseStream = response.GetResponseStream();
+            var image = Image.FromStream(responseStream);
+            return image;
+        }
+
+        public static Image GetVideoFirstFrameFromUrl(string video)
+        {
+            C.WriteNoTime("Converting image with ffmpeg...");
+            string location = GetExecutingAssembly().Location;
+            string absoluteCurrentDirectory = Path.GetDirectoryName(location);
+            string thumbLocation = Path.Combine(absoluteCurrentDirectory, "temp.png");
+            string ffmpegLocation = Path.Combine(absoluteCurrentDirectory, "ffmpeg.exe");
+            var cmd = $"-loglevel quiet -y -i \"{video}\" -vframes 1 -s {PixelSize}x{PixelSize} \"{thumbLocation}\"";
+            var calculatedffmpegPath = IsRunningOnMono() ? "/usr/bin/ffmpeg" : ffmpegLocation;
+            var startInfo = new ProcessStartInfo
+            {
+                WindowStyle = ProcessWindowStyle.Hidden,
+                CreateNoWindow = true,
+                FileName = calculatedffmpegPath,
+                Arguments = cmd
+            };
+            var process = new Process
+            {
+                StartInfo = startInfo
+            };
+
+            process.Start();
+
+            while (!process.HasExited)
+            {
+                process.WaitForExit(100);
+            }
+            C.WriteLineNoTime("Done!");
+            return Image.FromFile(thumbLocation);
+        }
+
         public static string FetchHtml(string url)
         {
             string htmlBody = "";

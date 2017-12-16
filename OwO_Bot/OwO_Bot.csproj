@@ -7,7 +7,7 @@
     <ProjectGuid>{BCB8B612-9AF5-41BB-8817-D4DDC4C98FD9}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>OwO_Bot</RootNamespace>
-    <AssemblyName>OwO Bot</AssemblyName>
+    <AssemblyName>OwO_Bot</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

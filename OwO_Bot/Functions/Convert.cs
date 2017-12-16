@@ -2,6 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Xml;
@@ -54,7 +57,6 @@ namespace OwO_Bot.Functions
                             }
                             else
                             {
-
                                 info.SetValue(newObject, dr[index], null);
                             }
                     }
@@ -72,17 +74,26 @@ namespace OwO_Bot.Functions
         public static string BytesToReadableString(Int64 value, int decimalPlaces = 1)
         {
             string[] sizeSuffixes =
-            { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
-            if (decimalPlaces < 0) { throw new ArgumentOutOfRangeException(nameof(decimalPlaces)); }
-            if (value < 0) { return "-" + BytesToReadableString(-value); }
-            if (value == 0) { return string.Format("{0:n" + decimalPlaces + "} bytes", 0); }
+                {"bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
+            if (decimalPlaces < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(decimalPlaces));
+            }
+            if (value < 0)
+            {
+                return "-" + BytesToReadableString(-value);
+            }
+            if (value == 0)
+            {
+                return string.Format("{0:n" + decimalPlaces + "} bytes", 0);
+            }
 
             // mag is 0 for bytes, 1 for KB, 2, for MB, etc.
-            int mag = (int)Math.Log(value, 1024);
+            int mag = (int) Math.Log(value, 1024);
 
             // 1L << (mag * 10) == 2 ^ (10 * mag) 
             // [i.e. the number of bytes in the unit corresponding to mag]
-            decimal adjustedSize = (decimal)value / (1L << (mag * 10));
+            decimal adjustedSize = (decimal) value / (1L << (mag * 10));
 
             // make adjustment when the value is large enough that
             // it would round up to 1000 or more
@@ -96,5 +107,75 @@ namespace OwO_Bot.Functions
                 adjustedSize,
                 sizeSuffixes[mag]);
         }
+
+
+        #region Logic for resizing images
+
+        public static class ImageSize
+        {
+            public static Bitmap GetSpecificSize(Bitmap image, long requestedSize, bool tryJpegConvert = false)
+            {
+                //We will try to convert the image to a jpeg before manually resizing it, if that is enough to get it 
+                //Below the requestedSize, we return null, to process the conversion as another path.
+                if (tryJpegConvert)
+                {
+                    if (GetImageSizeAsJpeg(image) < requestedSize)
+                    {
+                        return null;
+                    }
+                }
+                long resizedImageSize = GetImageSize(image);
+                Bitmap resizedBitmap = image;
+                float steps = 10;
+                double widthReduction = image.Width * (steps / 100);
+                double heightReduction =  image.Height * (steps / 100);
+                while (resizedImageSize > requestedSize)
+                {
+                    int width = resizedBitmap.Width - (int) widthReduction;
+                    int height = resizedBitmap.Height - (int) heightReduction;
+                    resizedBitmap = ResizeImage(resizedBitmap, width, height);
+                    resizedImageSize = GetImageSize(resizedBitmap);
+                }
+
+                return resizedBitmap;
+            }
+
+            private static Bitmap ResizeImage(Bitmap image, int width, int height)
+            {
+                var destImage = new Bitmap(width, height);
+                using (var graphics = Graphics.FromImage(destImage))
+                {
+                    graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    graphics.DrawImage(image, new Rectangle(0, 0, width, height));
+                }
+                return destImage;
+            }
+
+            private static long GetImageSize(Bitmap image)
+            {
+                long maxByteSize;
+                using (var ms = new MemoryStream())
+                {
+                    image.Save(ms, ImageFormat.Png);
+                    maxByteSize = ms.Length;
+                }
+                return maxByteSize;
+            }
+
+            private static long GetImageSizeAsJpeg(Bitmap image)
+            {
+                long maxByteSize;
+                using (var ms = new MemoryStream())
+                {
+                    image.Save(ms, ImageFormat.Jpeg);
+                    maxByteSize = ms.Length;
+                }
+                return maxByteSize;
+            }
+        }
+
+        #endregion
     }
 }

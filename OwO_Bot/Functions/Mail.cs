@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Mime;
 using System.Reflection;
 using System.Threading;
 using SysTimer = System.Timers;
@@ -141,7 +140,7 @@ namespace OwO_Bot.Functions
                         };
 
                         dbBlackList.AddToBlacklist(item);
-                        Process.Start(Assembly.GetExecutingAssembly().Location);
+                        Process.Start(Assembly.GetExecutingAssembly().Location, Args.FirstOrDefault());
                         Environment.Exit(0);
                     }
                     else

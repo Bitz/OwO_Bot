@@ -30,7 +30,7 @@ namespace OwO_Bot
             SetOut(new Writer());
             C.WriteLine("Configuration loaded!");
             Title = "OwO Bot " + Constants.Version;
-
+            Args = args;
             int argumentIndex = 0;
             if (args.Length > 0)
             {
@@ -45,7 +45,7 @@ namespace OwO_Bot
             //{
             //    var allPosts = p.GetAllPosts();
 
-                
+
             //    foreach (Misc.PostRequest s in allPosts)
             //    {
             //        if (string.IsNullOrEmpty(s.Title))
@@ -105,7 +105,13 @@ namespace OwO_Bot
                 string[] hideTags = subConfig.hide.Split(' ').Select(x => x.Trim())
                     .Where(x => !string.IsNullOrWhiteSpace(x))
                     .ToArray();
+                //Filetype filtering
+                searchObject = searchObject.Where(results => results.FileExt != "swf").ToList();
+                //Hard filtering
+                searchObject = searchObject.Where(results => !TagsToHide.Any(tagsToHide => results.Tags.Contains(tagsToHide))).ToList();
+                //Soft filtering
                 searchObject = searchObject.Where(results => !hideTags.Any(tagsToHide => results.Tags.Contains(tagsToHide))).ToList();
+                //Blacklist filtering
                 searchObject = searchObject.Where(r => !blacklist.Select(x => x.PostId).Contains(r.Id)).ToList();
                 page++;
             }
@@ -181,11 +187,6 @@ namespace OwO_Bot
                             isUnique = false;
                             break;
                         }
-                        else //We found the image posted on another sub. logic for xposting goes here... if we actually want it.
-                        {
-                            //C.WriteLine("But the image was uploaded to another sub...");
-                            //willXPost = true;
-                        }
                     }
                 }
                 if (isUnique)
@@ -205,30 +206,33 @@ namespace OwO_Bot
                 C.WriteLine("Found an image to post! Lets start doing things...");
             }
 
-            List<string> pictureExtensions = new List<string>{"jpg", "png", "jpeg"};
-            List<string> animationExtensions = new List<string>{"gif", "webm"};
-
-            C.Write("Building title...");
             Misc.PostRequest request = new Misc.PostRequest
             {
-                Title = GenerateTitle(imageToPost),
                 Description = imageToPost.Description,
                 RequestUrl = imageToPost.FileUrl,
+                RequestSize = imageToPost.FileSize,
                 IsNsfw = imageToPost.Rating == "e",
                 E621Id = imageToPost.Id,
                 Subreddit = WorkingSub
             };
-            C.WriteLineNoTime("Done!");
+            
+            //Properly recycle data if we are going to be reposting something from another sub. 
+            DbPosts dboPosts = new DbPosts();
+            var uploadedCheck = dboPosts.GetPostData(imageToPost.Id);
+            if (uploadedCheck.Count == 0)
+            {
+                C.Write("Building title...");
+                request.Title = GenerateTitle(imageToPost);
+                C.WriteLineNoTime("Done!");
+                UploadImage(imageToPost, ref request);
+            }
+            else
+            {
+                var first = uploadedCheck.First();
+                request.Title = first.Title;
+                request.ResultUrl = first.ResultUrl;
+            }
 
-            //Upload to either imgur or gyfcat depending on the type.
-            if (pictureExtensions.Contains(imageToPost.FileExt))
-            {
-                Upload.PostToImgur(ref request);
-            }
-            else if (animationExtensions.Contains(imageToPost.FileExt))
-            {
-                Upload.PostToGfycat(ref request);
-            }
             C.Write("Posting to Reddit...");
             Post post = subreddit.SubmitPost(request.Title, request.ResultUrl);
             if (request.IsNsfw)
@@ -277,6 +281,21 @@ namespace OwO_Bot
             }
 
             C.WriteLineNoTime("Done!");
+        }
+
+        private static void UploadImage(SearchResult imageToPost, ref Misc.PostRequest request)
+        {
+            List<string> pictureExtensions = new List<string> { "jpg", "png", "jpeg" };
+            List<string> animationExtensions = new List<string> { "gif", "webm" };
+            //Upload to either imgur or gyfcat depending on the type.
+            if (pictureExtensions.Contains(imageToPost.FileExt))
+            {
+                Upload.PostToImgur(ref request);
+            }
+            else if (animationExtensions.Contains(imageToPost.FileExt))
+            {
+                Upload.PostToGfycat(ref request);
+            }
         }
 
         /// <summary>

@@ -8,6 +8,7 @@ namespace OwO_Bot.Models
         public class PostRequest
         {
             public string RequestUrl { get; set; }
+            public long RequestSize { get; set; }
             public string Title { get; set; }
             public string Description { get; set; }
             public long E621Id { get; set; }

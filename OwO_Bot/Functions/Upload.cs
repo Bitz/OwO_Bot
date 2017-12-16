@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Drawing.Imaging;
 using System.Net.Http.Headers;
 using System.Threading;
 using Imgur.API.Authentication.Impl;
@@ -9,6 +11,8 @@ using Imgur.API.Endpoints.Impl;
 using Imgur.API.Models;
 using Newtonsoft.Json;
 using OwO_Bot.Models;
+using static OwO_Bot.Functions.Convert.ImageSize;
+using static OwO_Bot.Functions.Html;
 using static OwO_Bot.Models.Misc;
 
 namespace OwO_Bot.Functions
@@ -17,10 +21,40 @@ namespace OwO_Bot.Functions
     {
         public static void PostToImgur(ref PostRequest model)
         {
-            C.Write("Uploading to Imgur...");
             ImgurClient client = new ImgurClient(Constants.Config.imgur.apikey);
             ImageEndpoint endpoint = new ImageEndpoint(client);
-            IImage image = endpoint.UploadImageUrlAsync(model.RequestUrl, null, model.Title, model.Description).Result;
+            C.Write("Uploading to Imgur...");
+            IImage image;
+            //Imgur can only handle Images of 10MB. 
+            int tenMb = 10400000;
+            if (model.RequestSize > tenMb)
+            {   //Download the image
+                C.Write("Resizing image...");
+                using (Bitmap imageFromUrl = new Bitmap(GetImageFromUrl(model.RequestUrl)))
+                {
+                    using (Bitmap resizedBitmap = GetSpecificSize(imageFromUrl, tenMb, true))
+                    {
+                        using (MemoryStream memoryStream = new MemoryStream(tenMb))
+                        {
+                            if (resizedBitmap == null)
+                            {
+                                imageFromUrl.Save(memoryStream, ImageFormat.Jpeg);
+                            }
+                            else
+                            {
+                                resizedBitmap.Save(memoryStream, ImageFormat.Png);
+                            }
+                            image = endpoint.UploadImageBinaryAsync(memoryStream.ToArray(), null, model.Title, model.Description).Result;
+                        }
+                    }
+                }
+                C.WriteLineNoTime("Done!");
+            }
+            else
+            {
+                image = endpoint.UploadImageUrlAsync(model.RequestUrl, null, model.Title, model.Description).Result;
+            }
+
             model.ResultUrl = image.Link;
             model.DeleteHash = image.DeleteHash;
             C.WriteLineNoTime("Done!");

@@ -18,6 +18,7 @@ namespace OwO_Bot
             }
         }
 
+        public static string[] Args { get; set; }
         public static string WorkingSub { get; set; }
 
         #endregion Configuration
@@ -26,5 +27,8 @@ namespace OwO_Bot
 
         //If this value changes, be sure to regenerate ALL entries in the database. 
         public static int PixelSize => 24;
+
+        //List of Tags that should never end up on reddit or will not be handled by the bot.
+        public static string[] TagsToHide = {"loli", "cub"};
     }
 }
