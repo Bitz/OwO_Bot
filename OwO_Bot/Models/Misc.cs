@@ -7,6 +7,7 @@ namespace OwO_Bot.Models
     {
         public class PostRequest
         {
+            public long Id { get; set; }
             public string RequestUrl { get; set; }
             public long RequestSize { get; set; }
             public string Title { get; set; }
@@ -16,6 +17,7 @@ namespace OwO_Bot.Models
             public string DeleteHash { get; set; }
             public string RedditPostId { get; set; }
             public string Subreddit { get; set; }
+            public string ColorScheme { get; set; }
             public bool IsNsfw { get; set; }
             public DateTime DatePosted { get; set; }
         }

@@ -23,6 +23,24 @@ namespace OwO_Bot.Functions
             return image;
         }
 
+        public static string FindThumbnail(string url)
+        {
+            string thumbUrl = string.Empty;
+            List<string> imageExtensions = new List<string> { ".png", ".jpg", ".jpeg" };
+            string ext = Path.GetExtension(url);
+            if (url.Contains("imgur.com") && imageExtensions.Contains(ext))
+            {
+                string thumbrl = url.Replace(ext, "");
+                thumbUrl = $"{thumbrl}m{ext}";
+            }
+            else if (url.Contains("gfycat.com"))
+            {
+                Uri uri = new Uri(url);
+                thumbUrl = $"{uri.Scheme}://thumbs.{url.Replace(uri.Scheme + "://", "")}-mobile.jpg";
+            }
+            return thumbUrl;
+        }
+
         public static Image GetVideoFirstFrameFromUrl(string video)
         {
             C.WriteNoTime("Converting image with ffmpeg...");

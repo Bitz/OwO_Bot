@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
+using OwO_Bot.Models;
 
 namespace OwO_Bot.Functions.DAL
 {
@@ -41,29 +42,29 @@ namespace OwO_Bot.Functions.DAL
 
 
 
-        public List<Models.Misc.PostRequest> GetPostData(long e621Id)
+        public List<Misc.PostRequest> GetPostData(long e621Id)
         {
             string ss = $"SELECT * FROM {_table} WHERE E621Id = ?E621Id;";
             var p = new List<MySqlParameter>
             {
-                new MySqlParameter("?E621Id", e621Id),
+                new MySqlParameter("?E621Id", e621Id)
             };
             MySqlDataReader r = _con.ExecuteDataReader(ss, ref p);
             using (r)
             {
-                return Convert.ReaderToList<Models.Misc.PostRequest>(r, true);
+                return Convert.ReaderToList<Misc.PostRequest>(r, true);
             }
         }
 
 
-        public List<Models.Misc.PostRequest> GetAllPosts()
+        public List<Misc.PostRequest> GetAllPosts()
         {
             string ss = $"SELECT * FROM {_table};";
             var p = new List<MySqlParameter>();
             MySqlDataReader r = _con.ExecuteDataReader(ss, ref p);
             using (r)
             {
-                return Convert.ReaderToList<Models.Misc.PostRequest>(r, true);
+                return Convert.ReaderToList<Misc.PostRequest>(r, true);
             }
         }
 
@@ -97,7 +98,29 @@ namespace OwO_Bot.Functions.DAL
             return result;
         }
 
-        public bool AddPostToDatabase(Models.Misc.PostRequest postRequest)
+
+        public void UpdateColorScheme(long id, string hex)
+        {
+            string ss = $"UPDATE {_table} SET ColorScheme = ?ColorScheme WHERE Id = ?Id;";
+            List<MySqlParameter> parameters = new List<MySqlParameter>
+            {
+                new MySqlParameter("?Id", id),
+                new MySqlParameter("?ColorScheme", hex)
+            };
+            _con.ExecuteNonQuery(ss, ref parameters, true);
+        }
+
+        public List<Misc.PostRequest> GetWithNoColorScheme()
+        {
+            string ss = $"SELECT Id, ResultUrl FROM {_table} WHERE ColorScheme IS NUlL;";
+            List<MySqlParameter> parameters = new List<MySqlParameter>();
+            using (MySqlDataReader r = _con.ExecuteDataReader(ss, ref parameters))
+            {
+                return Convert.ReaderToList<Misc.PostRequest>(r, true);
+            }
+        }
+
+        public bool AddPostToDatabase(Misc.PostRequest postRequest)
         {
             string ss = $"INSERT INTO {_table} " +
                         @"( `E621Id`,
@@ -106,8 +129,9 @@ namespace OwO_Bot.Functions.DAL
                             `Title`,
                             `RedditPostId`,
                             `Subreddit`,
+                            `ColorScheme`,
                             `DatePosted`) VALUES" +
-                        "(?E621Id, ?ResultUrl, ?DeleteHash, ?Title, ?RedditPostId, ?Subreddit, ?DatePosted);";
+                        "(?E621Id, ?ResultUrl, ?DeleteHash, ?Title, ?RedditPostId, ?Subreddit, ?ColorScheme, ?DatePosted);";
             List<MySqlParameter> parameters = new List<MySqlParameter>
             {
                 new MySqlParameter("?E621Id", postRequest.E621Id),
@@ -116,7 +140,8 @@ namespace OwO_Bot.Functions.DAL
                 new MySqlParameter("?Title", postRequest.Title),
                 new MySqlParameter("?RedditPostId", postRequest.RedditPostId),
                 new MySqlParameter("?Subreddit", postRequest.Subreddit),
-                new MySqlParameter("?DatePosted", postRequest.DatePosted),
+                new MySqlParameter("?ColorScheme", postRequest.ColorScheme),
+                new MySqlParameter("?DatePosted", postRequest.DatePosted)
             };
             var rowsAffected = _con.ExecuteNonQuery(ss, ref parameters);
 

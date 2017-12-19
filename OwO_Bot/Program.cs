@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using ColorThiefDotNet;
 using Newtonsoft.Json;
 using RedditSharp;
 using RedditSharp.Things;
@@ -54,6 +56,22 @@ namespace OwO_Bot
             //            Post sss = (Post)redd.GetThingByFullname($"t3_{s.RedditPostId}");
             //            p.SetTitle(s.E621Id, sss.Title);
             //        }
+            //    }
+            //}
+            #endregion
+
+            #region Temporary method for populating colorschemes
+            //using (DbPosts p = new DbPosts())
+            //{
+            //    var noColorScheme = p.GetWithNoColorScheme();
+
+            //    var colorThiefc = new ColorThief();
+            //    foreach (var r in noColorScheme)
+            //    {
+            //        string thumbUrlc = Html.FindThumbnail(r.ResultUrl);
+            //        Bitmap ac = new Bitmap(Html.GetImageFromUrl(thumbUrlc));
+            //        var color = colorThiefc.GetColor(ac);
+            //        p.UpdateColorScheme(r.Id, color.Color.ToHexString());
             //    }
             //}
             #endregion
@@ -205,7 +223,6 @@ namespace OwO_Bot
             {
                 C.WriteLine("Found an image to post! Lets start doing things...");
             }
-
             Misc.PostRequest request = new Misc.PostRequest
             {
                 Description = imageToPost.Description,
@@ -267,6 +284,11 @@ namespace OwO_Bot
                 CreatedDate = DateTime.Now,
                 Subreddit = WorkingSub
             };
+
+            var colorThief = new ColorThief();
+            string thumbUrl = Html.FindThumbnail(request.ResultUrl);
+            Bitmap a = new Bitmap(Html.GetImageFromUrl(thumbUrl));
+            request.ColorScheme = colorThief.GetColor(a).Color.ToHexString();
 
             //instate a reusable connection rather than a 1 off object.
             using (DbConnector dbConnector = new DbConnector())
