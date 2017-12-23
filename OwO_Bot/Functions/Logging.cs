@@ -11,7 +11,7 @@ namespace OwO_Bot.Functions
             string loggingpath = PathToLog();
             Directory.CreateDirectory(Path.Combine(absoluteCurrentDirectory, loggingpath));
             string fullloggingPath = Path.Combine(absoluteCurrentDirectory, loggingpath);
-            string logName = $"{DateTime.Now:MM-dd-yyyy-hh-mm-ss-tt}.log";
+            string logName = $"{DateTime.Now:MM-dd-yyyy-HH-mm-ss-tt}.log";
             fullloggingPath = Path.Combine(fullloggingPath, logName);
             StreamWriter logfile = File.CreateText(fullloggingPath);
             logfile.AutoFlush = true;

@@ -29,6 +29,6 @@ namespace OwO_Bot
         public static int PixelSize => 24;
 
         //List of Tags that should never end up on reddit or will not be handled by the bot.
-        public static string[] TagsToHide = {"loli", "cub"};
+        public static string[] TagsToHide = {"loli", "cub", "shota"};
     }
 }

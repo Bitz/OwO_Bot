@@ -86,7 +86,7 @@ namespace OwO_Bot
 
             C.WriteLine($"Running for /r/{subConfig.subreddit}!");
 
-            string saveTags = $"{subConfig.tags} date:{DateTime.Now.AddDays(-1):yyyy-MM-dd}";
+            string saveTags = $"{subConfig.tags} date:>={DateTime.Now.AddDays(-1):yyyy-MM-dd}";
             WebClient client = new WebClient
             {
                 Headers = { ["User-Agent"] = $"OwO Bot/{Constants.Version} (by BitzLeon on Reddit)" }

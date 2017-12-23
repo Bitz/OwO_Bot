@@ -17,7 +17,6 @@ namespace OwO_Bot.Functions
 {
     class Mail
     {
-
         public bool Send(string subject, string messageContent)
         {
             C.WriteNoTime("Requesting title via email...");
@@ -51,109 +50,123 @@ namespace OwO_Bot.Functions
 
         public string Recieve(string search, long postId)
         {
-            string result = "";
-            using (var client = new ImapClient())
+            string result = string.Empty;
+
+            while (string.IsNullOrEmpty(result))
             {
-                client.ServerCertificateValidationCallback = (s, c, h, e) => true;
-
-                client.Connect(Config.mail.incoming_server, Config.mail.incoming_port, true);
-
-                // Note: since we don't have an OAuth2 token, disable
-                client.Authenticate(Config.mail.username, Config.mail.password);
-                // the XOAUTH2 authentication mechanism.
-                client.AuthenticationMechanisms.Remove("XOAUTH2");
-                // The Inbox folder is always available on all IMAP servers...
-                IMailFolder inbox = client.Inbox;
-
-                inbox.Open(FolderAccess.ReadWrite);
-
-                UniqueId nextUid = new UniqueId();
-                if (inbox.UidNext != null)
+                using (var client = new ImapClient())
                 {
-                    nextUid = inbox.UidNext.Value;
-                }
-                else
-                {
-                    C.WriteLine("Could not connect to email.");
-                    Environment.Exit(0);
-                }
+                    client.ServerCertificateValidationCallback = (s, c, h, e) => true;
 
-                var query = SearchQuery.NotSeen
-                    .And(SearchQuery.SubjectContains(search))
-                    .And(SearchQuery.FromContains(Config.mail.to.ToLower()));
+                    client.Connect(Config.mail.incoming_server, Config.mail.incoming_port, true);
 
-                CancellationTokenSource done = new CancellationTokenSource();
-                var thread = new Thread(IdleLoop);
-                
-                client.Inbox.MessagesArrived += (sender, e) =>
-                {
-                    C.WriteLineNoTime("You got mail!");
-                    done.Cancel();
-                };
-                //1 Hour and 30 mins.
-                var timer = new SysTimer.Timer {Interval = 5400000 };
-                timer.Elapsed += (sender, e) =>
-                {
-                    C.WriteLine("Time passed with no reply...");
-                    Send(search, "Request Cancelled");
-                    C.WriteLine("We won't be proceeding with this post...");
+                    // Note: since we don't have an OAuth2 token, disable
+                    client.Authenticate(Config.mail.username, Config.mail.password);
+                    // the XOAUTH2 authentication mechanism.
+                    client.AuthenticationMechanisms.Remove("XOAUTH2");
+                    // The Inbox folder is always available on all IMAP servers...
+                    IMailFolder inbox = client.Inbox;
 
-                    Environment.Exit(0);
-                    done.Cancel();
-                };
-                timer.Start();
+                    inbox.Open(FolderAccess.ReadWrite);
 
-                thread.Start(new IdleState(client, done.Token));
-                thread.Join();
-                done.Dispose();
-                    
-                var range = new UniqueIdRange(nextUid, UniqueId.MaxValue);
-
-                foreach (UniqueId uid in inbox.Search(range,query))
-                {
-                    var message = inbox.GetMessage(uid);
-                    result = message.TextBody.Split('\r', '\n').FirstOrDefault();
-                    inbox.AddFlags(uid, MessageFlags.Deleted, true);
-
-                    if (result != null && result.ToLower().ToLower() == "cancel")
+                    UniqueId nextUid = new UniqueId();
+                    if (inbox.UidNext != null)
                     {
-                        C.WriteLine("We won't be proceeding with this post...");
-                        DbBlackList dbBlackList = new DbBlackList();
-                        Blacklist item = new Blacklist
-                        {
-                            Subreddit = WorkingSub,
-                            PostId = postId,
-                            CreatedDate = DateTime.Now
-                        };
-
-                        dbBlackList.AddToBlacklist(item);
-                        Environment.Exit(0);
-                    } else if (result != null && result.ToLower().ToLower() == "next")
-                    {
-                        C.WriteLine("We won't be proceeding with this post...");
-                        DbBlackList dbBlackList = new DbBlackList();
-                        Blacklist item = new Blacklist
-                        {
-                            Subreddit = WorkingSub,
-                            PostId = postId,
-                            CreatedDate = DateTime.Now
-                        };
-
-                        dbBlackList.AddToBlacklist(item);
-                        Process.Start(Assembly.GetExecutingAssembly().Location, Args.FirstOrDefault());
-                        Environment.Exit(0);
+                        nextUid = inbox.UidNext.Value;
                     }
                     else
                     {
-                        C.WriteLineNoTime("We got a title!");
+                        C.WriteLine("Could not connect to email.");
+                        Environment.Exit(0);
                     }
-                    break;
+
+                    var range = new UniqueIdRange(nextUid, UniqueId.MaxValue);
+                    var query = SearchQuery.NotSeen
+                        .And(SearchQuery.SubjectContains(postId.ToString()))
+                        .And(SearchQuery.FromContains(Config.mail.to.ToLower()));
+
+                    using (CancellationTokenSource done = new CancellationTokenSource())
+                    {
+                        Thread thread = new Thread(IdleLoop);
+
+                        client.Inbox.CountChanged += (sender, e) =>
+                        {
+                            C.WriteLineNoTime("You got mail!");
+                            done.Cancel();
+                        };
+                        //1 Hour and 30 mins.
+                        var timer = new SysTimer.Timer {Interval = 5400000};
+                        timer.Elapsed += (sender, e) =>
+                        {
+                            C.WriteLine("Time passed with no reply...");
+                            Send(search, "Request Cancelled");
+                            C.WriteLine("We won't be proceeding with this post...");
+                            Environment.Exit(0);
+                            done.Cancel();
+                        };
+                        timer.Start();
+                        thread.Start(new IdleState(client, done.Token));
+                        thread.Join();
+                        result = CheckMail(postId, inbox, range, query);
+                    }
+                    client.Disconnect(true);
                 }
-                client.Disconnect(true);
             }
             return result;
         }
-        
+
+        private static string CheckMail(long postId, IMailFolder inbox, UniqueIdRange range,
+            BinarySearchQuery query)
+        {
+            string result = string.Empty;
+            foreach (UniqueId uid in inbox.Search(range, query))
+            {
+                var message = inbox.GetMessage(uid);
+                result = message.TextBody.Split('\r', '\n').FirstOrDefault();
+
+                if (!string.IsNullOrEmpty(result))
+                {
+                    inbox.AddFlags(uid, MessageFlags.Seen, true);
+                }
+
+                if (result != null && result.ToLower().ToLower() == "cancel")
+                {
+                    C.WriteLine("We won't be proceeding with this post...");
+                    DbBlackList dbBlackList = new DbBlackList();
+                    Blacklist item = new Blacklist
+                    {
+                        Subreddit = WorkingSub,
+                        PostId = postId,
+                        CreatedDate = DateTime.Now
+                    };
+                    dbBlackList.AddToBlacklist(item);
+                    Environment.Exit(0);
+                }
+                else if (result != null && result.ToLower().ToLower() == "next")
+                {
+                    C.WriteLine("We won't be proceeding with this post...");
+                    DbBlackList dbBlackList = new DbBlackList();
+                    Blacklist item = new Blacklist
+                    {
+                        Subreddit = WorkingSub,
+                        PostId = postId,
+                        CreatedDate = DateTime.Now
+                    };
+
+                    dbBlackList.AddToBlacklist(item);
+                    Process.Start(Assembly.GetExecutingAssembly().Location, Args.FirstOrDefault());
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    C.WriteLineNoTime("We got a title!");
+                }
+                break;
+            }
+
+            return result;
+        }
+
 
         //https://github.com/jstedfast/MailKit/blob/master/samples/ImapIdle/ImapIdle/Program.cs
         class IdleState
@@ -177,12 +190,12 @@ namespace OwO_Bot.Functions
             /// Get the done token.
             /// </summary>
             /// <remarks>
-            /// <para>The done token tells the <see cref="Program.IdleLoop"/> that the user has requested to end the loop.</para>
-            /// <para>When the done token is cancelled, the <see cref="Program.IdleLoop"/> will gracefully come to an end by
+            /// <para>The done token tells the <see cref="IdleLoop"/> that the user has requested to end the loop.</para>
+            /// <para>When the done token is cancelled, the <see cref="IdleLoop"/> will gracefully come to an end by
             /// cancelling the timeout and then breaking out of the loop.</para>
             /// </remarks>
             /// <value>The done token.</value>
-            public CancellationToken DoneToken { get; }
+            private CancellationToken DoneToken { get; }
 
             /// <summary>
             /// Get the IMAP client.
@@ -194,7 +207,8 @@ namespace OwO_Bot.Functions
             /// Check whether or not either of the CancellationToken's have been cancelled.
             /// </summary>
             /// <value><c>true</c> if cancellation was requested; otherwise, <c>false</c>.</value>
-            public bool IsCancellationRequested => CancellationToken.IsCancellationRequested || DoneToken.IsCancellationRequested;
+            public bool IsCancellationRequested =>
+                CancellationToken.IsCancellationRequested || DoneToken.IsCancellationRequested;
 
             /// <summary>
             /// Initializes a new instance of the <see cref="IdleState"/> class.
@@ -202,7 +216,8 @@ namespace OwO_Bot.Functions
             /// <param name="client">The IMAP client.</param>
             /// <param name="doneToken">The user-controlled 'done' token.</param>
             /// <param name="cancellationToken">The brute-force cancellation token.</param>
-            public IdleState(ImapClient client, CancellationToken doneToken, CancellationToken cancellationToken = default(CancellationToken))
+            public IdleState(ImapClient client, CancellationToken doneToken,
+                CancellationToken cancellationToken = default(CancellationToken))
             {
                 CancellationToken = cancellationToken;
                 DoneToken = doneToken;
@@ -241,7 +256,7 @@ namespace OwO_Bot.Functions
 
         static void IdleLoop(object state)
         {
-            var idle = (IdleState)state;
+            IdleState idle = (IdleState) state;
 
             lock (idle.Client.SyncRoot)
             {
@@ -269,7 +284,7 @@ namespace OwO_Bot.Functions
                                 idle.Client.NoOp(idle.CancellationToken);
 
                                 // Wait for the timeout to elapse or the cancellation token to be cancelled
-                                WaitHandle.WaitAny(new[] { timeout.Token.WaitHandle, idle.CancellationToken.WaitHandle });
+                                WaitHandle.WaitAny(new[] {timeout.Token.WaitHandle, idle.CancellationToken.WaitHandle});
                             }
                         }
                         catch (OperationCanceledException)
