@@ -269,11 +269,11 @@ namespace OwO_Bot
                 parsedSource = "No source provided";
             }
             string parsede621Source =  $"[e621 Source](https://e621.net/post/show/{imageToPost.Id})";
-            string comment = $"[](/sweetiecardbot) {parsedSource} | {parsede621Source} " +
+            string comment = $"{parsedSource} | {parsede621Source} " +
                              "\r\n  \r\n" +
                              "---" +
                              "\r\n  \r\n" +
-                             $"This is a bot | [Info](https://bitz.rocks/owo_bot) | [Report problems](/message/compose/?to=BitzLeon&subject={Config.reddit.username} running OwO Bot {Constants.Version}) | [Source code](https://github.com/Bitz/OwO_Bot)";
+                             $"This is a bot | [Info](https://owo.bitz.rocks/) | [Donate](https://owo.bitz.rocks/Donate) | [Report problems](/message/compose/?to=BitzLeon&subject={Config.reddit.username} running OwO Bot {Constants.Version}) | [Source code](https://github.com/Bitz/OwO_Bot)";
 
             post.Comment(comment);
             request.RedditPostId = post.Id;

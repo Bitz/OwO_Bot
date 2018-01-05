@@ -44,59 +44,7 @@ namespace OwO_Bot.Functions
                         s => ToTitleCase(s.Replace("_(artist)", ""))));
                 }
 
-                Dictionary<string, string> genderLetterPairings =
-                    new Dictionary<string, string>
-                    {
-                       //{"ambiguous_gender", "A"},
-                        {"male", "M"},
-                        {"dickgirl", "D"},
-                        {"cuntboy", "C"},
-                       // {"intersex", "I"},
-                        {"female", "F"},
-                        {"maleherm", "H"},
-                        {"herm", "H"},
-                        {"tentacles", "T"}
-                    };
-                List<string> genderList = new List<string>();
-                List<string> tags = image.Tags.ToLower().Split(' ')
-                    .Where(x => x.Contains("/") || genderLetterPairings.ContainsKey(x) 
-                    && !x.Contains("intersex")
-                    && !x.Contains("ambiguous_gender")
-                    ).ToList();
-
-                foreach (var tag in tags)
-                {
-                    if (tag.Contains('/')) //Do pairings
-                    {
-                        var parts = tag.Split('/');
-                        string thisPairing = string.Empty;
-                        if (parts.Any(x => genderLetterPairings.ContainsKey(x)))
-                        {
-                            foreach (var tagPart in parts)
-                            {
-                                thisPairing += genderLetterPairings.FirstOrDefault(x => x.Key == tagPart).Value;
-                            }
-                            genderList.Add(thisPairing);
-                        }
-                    }
-                    else if (!tags.Any(x => x.Contains('/'))) //If there were no pairings, this image only has solos
-                    {
-                        var soloTag = genderLetterPairings.FirstOrDefault(x => x.Key == tag);
-                        genderList.Add(soloTag.Value);
-                    }
-                }
-
-                string genderGroupings;
-
-                if (genderList.Count == 2)
-                {
-                    genderGroupings = string.Join("", genderList);
-                }
-                else
-                {
-                    genderGroupings = genderList.Count == 0 ? "MF" : string.Join(" ", genderList);
-                }
-
+                string genderGroupings = GenerateGenderTags(image.Tags);
 
                 string mainTitle = MainTitle(image);
 
@@ -105,6 +53,65 @@ namespace OwO_Bot.Functions
                 return result.Trim();
             }
         }
+
+        private static string GenerateGenderTags(string imageTags)
+        {
+            Dictionary<string, string> genderLetterPairings =
+           new Dictionary<string, string>
+           {
+                {"male", "M"},
+                {"dickgirl", "D"},
+                {"cuntboy", "C"},
+                {"female", "F"},
+                {"maleherm", "H"},
+                {"herm", "H"},
+                {"tentacles", "T"}
+           };
+            List<string> blacklist =
+            new List<string>
+            {
+                "intersex",
+                "ambiguous_gender"
+            };
+            List<string> genderList = new List<string>();
+            List<string> tags = imageTags.ToLower().Split(' ')
+                .Where(x => genderLetterPairings.Keys.Any(x.Contains) && !blacklist.Any(x.Contains)).ToList();
+
+            foreach (var tag in tags)
+            {
+                if (tag.Contains('/')) //Do pairings
+                {
+                    var parts = tag.Split('/');
+                    string thisPairing = string.Empty;
+                    if (parts.Distinct().Intersect(genderLetterPairings.Keys).Count() == parts.Distinct().Count())
+                    {
+                        foreach (var tagPart in parts)
+                        {
+                            thisPairing += genderLetterPairings.FirstOrDefault(x => x.Key == tagPart).Value;
+                        }
+                        genderList.Add(thisPairing);
+                    }
+                }
+                else if (!tags.Any(x => x.Contains('/')))
+                {
+                    var soloTag = genderLetterPairings.FirstOrDefault(x => x.Key == tag);
+                    genderList.Add(soloTag.Value);
+                }
+            }
+
+            string genderGroupings;
+
+            if (genderList.Count == 2)
+            {
+                genderGroupings = string.Join("", genderList);
+            }
+            else
+            {
+                genderGroupings = genderList.Count == 0 ? "F" : string.Join(" ", genderList);
+            }
+            return genderGroupings;
+        }
+
 
         private static string MainTitle(E621Search.SearchResult image)
         {
