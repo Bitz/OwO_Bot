@@ -4,7 +4,7 @@ using System;
 namespace OwO_Bot.Models
 {
 
-
+    // NOTE: Generated code may require at least .NET Framework 4.5 or .NET Core/Standard 2.0.
     /// <remarks/>
     [System.SerializableAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
@@ -304,7 +304,7 @@ namespace OwO_Bot.Models
     public partial class configurationMail
     {
 
-        private string toField;
+        private configurationMailReciever[] recieverField;
 
         private string usernameField;
 
@@ -319,16 +319,16 @@ namespace OwO_Bot.Models
         private ushort outgoing_portField;
 
         /// <remarks/>
-        [System.Xml.Serialization.XmlAttributeAttribute()]
-        public string to
+        [System.Xml.Serialization.XmlElementAttribute("reciever")]
+        public configurationMailReciever[] reciever
         {
             get
             {
-                return this.toField;
+                return this.recieverField;
             }
             set
             {
-                this.toField = value;
+                this.recieverField = value;
             }
         }
 
@@ -421,6 +421,46 @@ namespace OwO_Bot.Models
     [System.SerializableAttribute()]
     [System.ComponentModel.DesignerCategoryAttribute("code")]
     [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
+    public partial class configurationMailReciever
+    {
+
+        private string addressField;
+
+        private string usernameField;
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string address
+        {
+            get
+            {
+                return this.addressField;
+            }
+            set
+            {
+                this.addressField = value;
+            }
+        }
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public string username
+        {
+            get
+            {
+                return this.usernameField;
+            }
+            set
+            {
+                this.usernameField = value;
+            }
+        }
+    }
+
+    /// <remarks/>
+    [System.SerializableAttribute()]
+    [System.ComponentModel.DesignerCategoryAttribute("code")]
+    [System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
     public partial class configurationSub
     {
 
@@ -429,6 +469,10 @@ namespace OwO_Bot.Models
         private string tagsField;
 
         private string hideField;
+
+        private bool issafeField;
+
+        private bool issafeFieldSpecified;
 
         /// <remarks/>
         [System.Xml.Serialization.XmlAttributeAttribute()]
@@ -471,8 +515,35 @@ namespace OwO_Bot.Models
                 this.hideField = value;
             }
         }
-    }
 
+        /// <remarks/>
+        [System.Xml.Serialization.XmlAttributeAttribute()]
+        public bool issafe
+        {
+            get
+            {
+                return this.issafeField;
+            }
+            set
+            {
+                this.issafeField = value;
+            }
+        }
+
+        /// <remarks/>
+        [System.Xml.Serialization.XmlIgnoreAttribute()]
+        public bool issafeSpecified
+        {
+            get
+            {
+                return this.issafeFieldSpecified;
+            }
+            set
+            {
+                this.issafeFieldSpecified = value;
+            }
+        }
+    }
 
 
 

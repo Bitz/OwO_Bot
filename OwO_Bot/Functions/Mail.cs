@@ -19,10 +19,11 @@ namespace OwO_Bot.Functions
     {
         public bool Send(string subject, string messageContent)
         {
+            MailBasedTitle = true;
             C.WriteNoTime("Requesting title via email...");
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress("OwO Bot", Config.mail.username));
-            message.To.Add(new MailboxAddress(Config.mail.to));
+            message.To.Add(new MailboxAddress(EmailRecipient.address));
             message.Subject = subject;
             message.Body = new TextPart("plain")
             {
@@ -83,7 +84,7 @@ namespace OwO_Bot.Functions
                     var range = new UniqueIdRange(nextUid, UniqueId.MaxValue);
                     var query = SearchQuery.NotSeen
                         .And(SearchQuery.SubjectContains(postId.ToString()))
-                        .And(SearchQuery.FromContains(Config.mail.to.ToLower()));
+                        .And(SearchQuery.FromContains(EmailRecipient.address.ToLower()));
 
                     using (CancellationTokenSource done = new CancellationTokenSource())
                     {

@@ -46,9 +46,18 @@ namespace OwO_Bot.Functions
 
                 string genderGroupings = GenerateGenderTags(image.Tags);
 
-                string mainTitle = MainTitle(image);
+                string mainTitle = MainTitle(image, genderGroupings);
 
-                string result = $"{UppercaseFirst(mainTitle)} [{genderGroupings}] ({artistString}) {additionalString}";
+                if (mainTitle.Contains("[") && mainTitle.Contains("]"))
+                {
+                    genderGroupings = string.Empty;
+                }
+                else
+                {
+                    genderGroupings = $"[{ genderGroupings}] ";
+                }
+
+                string result = $"{UppercaseFirst(mainTitle).Trim()} {genderGroupings}({artistString}) {additionalString}";
 
                 return result.Trim();
             }
@@ -107,13 +116,13 @@ namespace OwO_Bot.Functions
             }
             else
             {
-                genderGroupings = genderList.Count == 0 ? "F" : string.Join(" ", genderList);
+                genderGroupings = genderList.Count == 0 ? "MF" : string.Join(" ", genderList);
             }
             return genderGroupings;
         }
 
 
-        private static string MainTitle(E621Search.SearchResult image)
+        private static string MainTitle(E621Search.SearchResult image, string genderGroupings)
         {
             string returnedTitle = string.Empty;
             //Some titles can be gotten automatically from their appropriate sources. Other times, we will have to send an email asking for a nice title.
@@ -162,7 +171,8 @@ namespace OwO_Bot.Functions
                 ":", ";",
                 "|", "#",
                 "&", "<",
-                ">"
+                ">", "system error",
+                "collab"
             };
 
             if (!string.IsNullOrEmpty(returnedTitle) && ! unapprovedTitleElements.Any(x => returnedTitle.ToLower().Contains(x)))
@@ -177,9 +187,13 @@ namespace OwO_Bot.Functions
             {
                 mailBody += $"TITLE: {returnedTitle}\r\n\r\n";
             }
-           
+
             mailBody += $"{image.FileUrl} (" + Convert.BytesToReadableString(image.FileSize) + ")\r\n\r\n";
             List<string> tags = image.Tags.ToLower().Split(' ').ToList();
+
+            mailBody += $"SUBREDDIT: /r/{WorkingSub} \r\n\r\n";
+
+            mailBody += $"GENDER GROUPINGS: [{genderGroupings}]\r\n\r\n";
 
             mailBody += "TAGS:\r\n\r\n";
             foreach (var tag in tags)
@@ -218,11 +232,5 @@ namespace OwO_Bot.Functions
             }
             return char.ToUpper(s[0]) + s.Substring(1);
         }
-
-
-
-
-
-
     }
 }

@@ -33,13 +33,28 @@ namespace OwO_Bot
             C.WriteLine("Configuration loaded!");
             Title = "OwO Bot " + Constants.Version;
             Args = args;
-            int argumentIndex = 0;
+            int argumentIndexSub = 0;
             if (args.Length > 0)
             {
-                if (int.TryParse(args[0], out argumentIndex))
+                if (int.TryParse(args[0], out argumentIndexSub))
                 {
-                    C.WriteLine("Found valid argument!");
+                    C.WriteLine("Found valid argument for subreddit!");
                 }
+            }
+
+            int argumentIndexMail = 0;
+            if (args.Length > 1)
+            {
+                if (int.TryParse(args[1], out argumentIndexMail))
+                {
+                    C.WriteLine("Found valid argument for Email!");
+                    EmailRecipient = Config.mail.reciever[argumentIndexMail];
+                }
+            }
+            else
+            {
+                C.WriteLine("Using default mailer!");
+                EmailRecipient = Config.mail.reciever[argumentIndexMail];
             }
 
             #region Temporary method for populating database with titles.
@@ -76,14 +91,14 @@ namespace OwO_Bot
             //}
             #endregion
 
-            if (argumentIndex == -1)
+            if (argumentIndexSub == -1)
             {
                 DatabaseManagement();
             }
 
-            var subConfig = Config.subreddit_configurations[argumentIndex];
+            var subConfig = Config.subreddit_configurations[argumentIndexSub];
             WorkingSub = subConfig.subreddit;
-
+            string requestSite = subConfig.issafe ? "e926" : "e621";
             C.WriteLine($"Running for /r/{subConfig.subreddit}!");
 
             string saveTags = $"{subConfig.tags} date:>={DateTime.Now.AddDays(-1):yyyy-MM-dd}";
@@ -105,8 +120,7 @@ namespace OwO_Bot
                 string result = string.Empty;
                 try
                 {
-                    result = client.DownloadString($"https://e621.net/post/index.json?tags={saveTags}&limit=50&page=" + page);
-
+                    result = client.DownloadString($"https://{requestSite}.net/post/index.json?tags={saveTags}&limit=50&page=" + page);
                 }
                 catch (WebException)
                 {
@@ -268,12 +282,27 @@ namespace OwO_Bot
             {
                 parsedSource = "No source provided";
             }
-            string parsede621Source =  $"[e621 Source](https://e621.net/post/show/{imageToPost.Id})";
+            
+            string parsede621Source =  $"[{requestSite} Source](https://{requestSite}.net/post/show/{imageToPost.Id})";
+
+            string creditsFooter;
+            if (MailBasedTitle)
+            {
+                creditsFooter = !string.IsNullOrEmpty(EmailRecipient.username) ? 
+                    $"/u/{EmailRecipient.username}" : 
+                    "a helpful user";
+            }
+            else
+            {
+                creditsFooter = "Artist";
+            }
             string comment = $"{parsedSource} | {parsede621Source} " +
-                             "\r\n  \r\n" +
+                             "\r\n" +
+                             "\r\n" +
                              "---" +
-                             "\r\n  \r\n" +
-                             $"This is a bot | [Info](https://owo.bitz.rocks/) | [Donate](https://owo.bitz.rocks/Donate) | [Report problems](/message/compose/?to=BitzLeon&subject={Config.reddit.username} running OwO Bot {Constants.Version}) | [Source code](https://github.com/Bitz/OwO_Bot)";
+                             "\r\n" +
+                             "\r\n" +
+                             $"Title by {creditsFooter} | This is a bot | [Info](https://owo.bitz.rocks/) | [Donate](https://owo.bitz.rocks/Donate) | [Report problems](/message/compose/?to=BitzLeon&subject={Config.reddit.username} running OwO Bot {Constants.Version}) | [Source code](https://github.com/Bitz/OwO_Bot)";
 
             post.Comment(comment);
             request.RedditPostId = post.Id;

@@ -19,7 +19,16 @@ namespace OwO_Bot.Functions
             WebRequest request = WebRequest.Create(url);
             WebResponse response = request.GetResponse();
             Stream responseStream = response.GetResponseStream();
-            var image = Image.FromStream(responseStream);
+            Image image;
+            try
+            {
+                image = Image.FromStream(responseStream);
+            }
+            catch (Exception)
+            {
+                //Fallback to getting image from this
+                image = GetVideoFirstFrameFromUrl(url);
+            }
             return image;
         }
 

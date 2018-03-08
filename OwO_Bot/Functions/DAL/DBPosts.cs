@@ -130,8 +130,9 @@ namespace OwO_Bot.Functions.DAL
                             `RedditPostId`,
                             `Subreddit`,
                             `ColorScheme`,
+                            `isSafe`,
                             `DatePosted`) VALUES" +
-                        "(?E621Id, ?ResultUrl, ?DeleteHash, ?Title, ?RedditPostId, ?Subreddit, ?ColorScheme, ?DatePosted);";
+                        "(?E621Id, ?ResultUrl, ?DeleteHash, ?Title, ?RedditPostId, ?Subreddit, ?ColorScheme, ?isSafe, ?DatePosted);";
             List<MySqlParameter> parameters = new List<MySqlParameter>
             {
                 new MySqlParameter("?E621Id", postRequest.E621Id),
@@ -141,6 +142,7 @@ namespace OwO_Bot.Functions.DAL
                 new MySqlParameter("?RedditPostId", postRequest.RedditPostId),
                 new MySqlParameter("?Subreddit", postRequest.Subreddit),
                 new MySqlParameter("?ColorScheme", postRequest.ColorScheme),
+                new MySqlParameter("?isSafe", !postRequest.IsNsfw),
                 new MySqlParameter("?DatePosted", postRequest.DatePosted)
             };
             var rowsAffected = _con.ExecuteNonQuery(ss, ref parameters);

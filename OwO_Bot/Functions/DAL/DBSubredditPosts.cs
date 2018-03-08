@@ -45,7 +45,7 @@ namespace OwO_Bot.Functions.DAL
 
         public int DeleteAllPostsOlderThan(int days = 30)
         {
-            string ss = $"DELETE FROM {_table} WHERE CreatedDate < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL ?days DAY));";
+            string ss = $"DELETE FROM {_table} WHERE CreatedDate < subdate(current_date, ?days);";
             var parameters = new List<MySqlParameter> {new MySqlParameter("?days", days)};
             return _con.ExecuteNonQuery(ss, ref parameters);
         }

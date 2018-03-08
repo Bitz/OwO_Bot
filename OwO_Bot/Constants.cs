@@ -19,14 +19,19 @@ namespace OwO_Bot
         }
 
         public static string[] Args { get; set; }
+
         public static string WorkingSub { get; set; }
 
+        public static bool MailBasedTitle { get; set; } = false;
+
+        public static configurationMailReciever EmailRecipient { get; set; }
         #endregion Configuration
 
         public static string Version => Assembly.GetEntryAssembly().GetName().Version.ToString();
 
         //If this value changes, be sure to regenerate ALL entries in the database. 
         public static int PixelSize => 24;
+
 
         //List of Tags that should never end up on reddit or will not be handled by the bot.
         public static string[] TagsToHide = {"loli", "cub", "shota"};
