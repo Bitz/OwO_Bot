@@ -70,7 +70,9 @@ namespace OwO_Bot.Functions
            {
                 {"male", "M"},
                 {"dickgirl", "D"},
+                {"gynomorph", "D"},
                 {"cuntboy", "C"},
+                {"andromorph", "C"},
                 {"female", "F"},
                 {"maleherm", "H"},
                 {"herm", "H"},
@@ -116,7 +118,7 @@ namespace OwO_Bot.Functions
             }
             else
             {
-                genderGroupings = genderList.Count == 0 ? "MF" : string.Join(" ", genderList);
+                genderGroupings = genderList.Count == 0 ? "MF" : string.Join("", genderList);
             }
             return genderGroupings;
         }
