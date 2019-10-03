@@ -302,7 +302,7 @@ namespace OwO_Bot
                              "---" +
                              "\r\n" +
                              "\r\n" +
-                             $"Title by {creditsFooter} | This is a bot | [Info](https://owo.bitz.rocks/) | [Donate](https://owo.bitz.rocks/Donate) | [Report problems](/message/compose/?to=BitzLeon&subject={Config.reddit.username} running OwO Bot {Constants.Version}) | [Source code](https://github.com/Bitz/OwO_Bot)";
+                             $"Title by {creditsFooter} | This is a bot | [Discord](https://discordapp.com/invite/gz9sn7r) | [Twitter](https://twitter.com/club_flank) | [Report problems](/message/compose/?to=BitzLeon&subject={Uri.EscapeUriString($"OwO Bot {Constants.Version} post {post.Shortlink}")}) | [Source code](https://github.com/Bitz/OwO_Bot)";
 
             post.Comment(comment);
             request.RedditPostId = post.Id;
