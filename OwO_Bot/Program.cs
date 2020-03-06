@@ -16,10 +16,11 @@ using OwO_Bot.Functions.DAL;
 using OwO_Bot.Models;
 using static OwO_Bot.Constants;
 using static OwO_Bot.Functions.Get.RedditPost;
-using static OwO_Bot.Models.E621Search;
 using static OwO_Bot.Models.Hashing;
 using C = OwO_Bot.Functions.C;
 using F = OwO_Bot.Functions;
+using P = OwO_Bot.Models.Post;
+using Post = RedditSharp.Things.Post;
 
 namespace OwO_Bot
 {
@@ -108,7 +109,7 @@ namespace OwO_Bot
             };
 
             int page = 1;
-            List<SearchResult> searchObject = new List<SearchResult>();
+            List<P> searchObject = new List<P>();
             List<Blacklist> blacklist;
             using (DbBlackList dbBlackList = new DbBlackList())
             {
@@ -120,16 +121,18 @@ namespace OwO_Bot
                 string result = string.Empty;
                 try
                 {
-                    result = client.DownloadString($"https://{requestSite}.net/post/index.json?tags={saveTags}&limit=50&page=" + page);
+                    result = client.DownloadString($"https://{requestSite}.net/posts.json?tags={saveTags}&limit=50&page=" + page);
                 }
                 catch (WebException)
                 {
                     C.WriteLine("No search results found.");
                     Environment.Exit(2);
                 }
-                var temp = JsonConvert.DeserializeObject<List<SearchResult>>(result);
-                if (temp != null)
+                var response = JsonConvert.DeserializeObject<E621Search>(result);
+
+                if (response?.Posts != null)
                 {
+                    var temp = response.Posts;
                     searchObject.AddRange(temp);
                     searchObject = searchObject.Distinct().ToList();
                 }
@@ -138,11 +141,11 @@ namespace OwO_Bot
                     .Where(x => !string.IsNullOrWhiteSpace(x))
                     .ToArray();
                 //Filetype filtering
-                searchObject = searchObject.Where(results => results.FileExt != "swf").ToList();
+                searchObject = searchObject.Where(results => results.File.Ext != "swf").ToList();
                 //Hard filtering
-                searchObject = searchObject.Where(results => !TagsToHide.Any(tagsToHide => results.Tags.Contains(tagsToHide))).ToList();
+                searchObject = searchObject.Where(results => !TagsToHide.Any(tagsToHide => results.Tags.General.Contains(tagsToHide))).ToList();
                 //Soft filtering
-                searchObject = searchObject.Where(results => !hideTags.Any(tagsToHide => results.Tags.Contains(tagsToHide))).ToList();
+                searchObject = searchObject.Where(results => !hideTags.Any(tagsToHide => results.Tags.General.Contains(tagsToHide))).ToList();
                 //Blacklist filtering
                 searchObject = searchObject.Where(r => !blacklist.Select(x => x.PostId).Contains(r.Id)).ToList();
                 page++;
@@ -201,11 +204,11 @@ namespace OwO_Bot
             List<ImgHash> dbPosts = dbSubredditConnection.GetAllValidPosts();
             dbSubredditConnection.Dispose(); //Close  the connection. Don't need to keep it open anymore. 
             dbPosts = dbPosts.Where(x => x.SubReddit.ToLower() == subConfig.subreddit.ToLower()).ToList();
-            SearchResult imageToPost = null;
-            foreach (SearchResult searchResult in searchObject)
+            P imageToPost = null;
+            foreach (P searchResult in searchObject)
             {
                 bool isUnique = true;
-                byte[] currentImageHash = F.Hashing.GetHash(searchResult.FileUrl);
+                byte[] currentImageHash = F.Hashing.GetHash(searchResult.File.Url.ToString());
                 
                 foreach (ImgHash imgHash in dbPosts)
                 {
@@ -240,8 +243,8 @@ namespace OwO_Bot
             Misc.PostRequest request = new Misc.PostRequest
             {
                 Description = imageToPost.Description,
-                RequestUrl = imageToPost.FileUrl,
-                RequestSize = imageToPost.FileSize,
+                RequestUrl = imageToPost.File.Url.ToString(),
+                RequestSize = imageToPost.File.Size,
                 IsNsfw = imageToPost.Rating == "e",
                 E621Id = imageToPost.Id,
                 Subreddit = WorkingSub
@@ -334,16 +337,16 @@ namespace OwO_Bot
             C.WriteLineNoTime("Done!");
         }
 
-        private static void UploadImage(SearchResult imageToPost, ref Misc.PostRequest request)
+        private static void UploadImage(P imageToPost, ref Misc.PostRequest request)
         {
             List<string> pictureExtensions = new List<string> { "jpg", "png", "jpeg" };
             List<string> animationExtensions = new List<string> { "gif", "webm" };
             //Upload to either imgur or gyfcat depending on the type.
-            if (pictureExtensions.Contains(imageToPost.FileExt))
+            if (pictureExtensions.Contains(imageToPost.File.Ext))
             {
                 Upload.PostToImgur(ref request);
             }
-            else if (animationExtensions.Contains(imageToPost.FileExt))
+            else if (animationExtensions.Contains(imageToPost.File.Ext))
             {
                 Upload.PostToGfycat(ref request);
             }

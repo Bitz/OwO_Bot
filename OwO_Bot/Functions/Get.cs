@@ -34,17 +34,17 @@ namespace OwO_Bot.Functions
                 return $"https://reddit.com/r/{image.SubReddit}/comments/{image.PostId}";
             }
 
-            public static string GenerateTitle(E621Search.SearchResult image, string additionalString = "")
+            public static string GenerateTitle(Post image, string additionalString = "")
             {
                 string artistString = "Unknown Artist";
-                image.Artist.Remove("conditional_dnp");
-                if (image.Artist != null)
+                if (image.Tags.Artist != null)
                 {
-                    artistString = image.Artist.Count == 0 ? "Unknown" : string.Join(" + ", image.Artist.Select(
+                    image.Tags.Artist.Remove("conditional_dnp");
+                    artistString = image.Tags.Artist.Count == 0 ? "Unknown" : string.Join(" + ", image.Tags.Artist.Select(
                         s => ToTitleCase(s.Replace("_(artist)", ""))));
                 }
 
-                string genderGroupings = GenerateGenderTags(image.Tags);
+                string genderGroupings = GenerateGenderTags(image.Tags.General);
 
                 string mainTitle = MainTitle(image, genderGroupings);
 
@@ -63,7 +63,7 @@ namespace OwO_Bot.Functions
             }
         }
 
-        private static string GenerateGenderTags(string imageTags)
+        private static string GenerateGenderTags(List<string> imageTags)
         {
             Dictionary<string, string> genderLetterPairings =
            new Dictionary<string, string>
@@ -85,8 +85,7 @@ namespace OwO_Bot.Functions
                 "ambiguous_gender"
             };
             List<string> genderList = new List<string>();
-            List<string> tags = imageTags.ToLower().Split(' ')
-                .Where(x => genderLetterPairings.Keys.Any(x.Contains) && !blacklist.Any(x.Contains)).ToList();
+            List<string> tags = imageTags.Where(x => genderLetterPairings.Keys.Any(x.Contains) && !blacklist.Any(x.Contains)).ToList();
 
             foreach (var tag in tags)
             {
@@ -124,7 +123,7 @@ namespace OwO_Bot.Functions
         }
 
 
-        private static string MainTitle(E621Search.SearchResult image, string genderGroupings)
+        private static string MainTitle(Post image, string genderGroupings)
         {
             string returnedTitle = string.Empty;
             //Some titles can be gotten automatically from their appropriate sources. Other times, we will have to send an email asking for a nice title.
@@ -134,21 +133,22 @@ namespace OwO_Bot.Functions
                 {
                     try //Lots can go wrong here, but it should not break anything. If anything here fails, continue on asking the user for a title.
                     {
-                        if (imageSource.Contains("furaffinity.net") && (imageSource.Contains("/view/") || imageSource.Contains("/full/")))
+                        var s = imageSource.ToString();
+                        if (s.Contains("furaffinity.net") && (s.Contains("/view/") || s.Contains("/full/")))
                         {
-                            returnedTitle = Html.Title.GetTitle(imageSource);
+                            returnedTitle = Html.Title.GetTitle(s);
                             returnedTitle = Html.Title.SplitBy(returnedTitle);
                             break;
                         }
-                        if (imageSource.Contains("inkbunny.net") && imageSource.Contains("/s/"))
+                        if (s.Contains("inkbunny.net") && s.Contains("/s/"))
                         {
-                            returnedTitle = Html.Title.GetTitle(imageSource);
+                            returnedTitle = Html.Title.GetTitle(s);
                             returnedTitle = Html.Title.SplitBy(returnedTitle);
                             break;
                         }
-                        if (imageSource.Contains("deviantart.com") && imageSource.Contains("/art/"))
+                        if (s.Contains("deviantart.com") && s.Contains("/art/"))
                         {
-                            returnedTitle = Html.Title.GetTitle(imageSource);
+                            returnedTitle = Html.Title.GetTitle(s);
                             returnedTitle = Html.Title.SplitBy(returnedTitle);
                             break;
                         }
@@ -190,15 +190,53 @@ namespace OwO_Bot.Functions
                 mailBody += $"TITLE: {returnedTitle}\r\n\r\n";
             }
 
-            mailBody += $"{image.FileUrl} (" + Convert.BytesToReadableString(image.FileSize) + ")\r\n\r\n";
-            List<string> tags = image.Tags.ToLower().Split(' ').ToList();
+            mailBody += $"{image.File.Url} (" + Convert.BytesToReadableString(image.File.Size) + ")\r\n\r\n";
+            
 
             mailBody += $"SUBREDDIT: /r/{WorkingSub} \r\n\r\n";
 
             mailBody += $"GENDER GROUPINGS: [{genderGroupings}]\r\n\r\n";
 
-            mailBody += "TAGS:\r\n\r\n";
-            foreach (var tag in tags)
+            mailBody += "ARTIST TAGS:\r\n";
+            foreach (var tag in image.Tags.Artist)
+            {
+                mailBody += tag + "\r\n";
+            }
+
+            mailBody += "GENERAL TAGS:\r\n";
+            foreach (var tag in image.Tags.General)
+            {
+                mailBody += tag + "\r\n";
+            }
+
+            mailBody += "SPECIES TAGS:\r\n";
+            foreach (var tag in image.Tags.Species)
+            {
+                mailBody += tag + "\r\n";
+            }
+
+            mailBody += "CHARACTER TAGS:\r\n";
+            foreach (var tag in image.Tags.Character)
+            {
+                mailBody += tag + "\r\n";
+            }
+
+            mailBody += "COPYRIGHT TAGS:\r\n";
+            foreach (var tag in image.Tags.Copyright)
+            {
+                mailBody += tag + "\r\n";
+            }
+
+            mailBody += "OTHER TAGS:\r\n";
+            foreach (var tag in image.Tags.Meta)
+            {
+                mailBody += tag + "\r\n";
+            }
+            foreach (var tag in image.Tags.Invalid)
+            {
+                mailBody += tag + "\r\n";
+            }
+            foreach (var tag in image.Tags.Lore)
             {
                 mailBody += tag + "\r\n";
             }

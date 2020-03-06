@@ -1,63 +1,140 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json;
-
-using J = Newtonsoft.Json.JsonPropertyAttribute;
+﻿
 
 namespace OwO_Bot.Models
 {
-    class E621Search
+    using System;
+    using System.Collections.Generic;
+    using Newtonsoft.Json;
+    using J = Newtonsoft.Json.JsonPropertyAttribute;
+
+    public class E621Search
     {
-        public class SearchResult
-        {
-            [J("artist")] public List<string> Artist { get; set; }
-            [J("author")] public string Author { get; set; }
-            [J("change")] public long Change { get; set; }
-            [J("children")] public string Children { get; set; }
-            [J("created_at")] public CreatedAt CreatedAt { get; set; }
-            [J("creator_id")] public long CreatorId { get; set; }
-            [J("description")] public string Description { get; set; }
-            [J("fav_count")] public long FavCount { get; set; }
-            [J("file_ext")] public string FileExt { get; set; }
-            [J("file_size")] public long FileSize { get; set; }
-            [J("file_url")] public string FileUrl { get; set; }
-            [J("has_children")] public bool HasChildren { get; set; }
-            [J("has_comments")] public bool HasComments { get; set; }
-            [J("has_notes")] public bool HasNotes { get; set; }
-            [J("height")] public long Height { get; set; }
-            [J("id")] public long Id { get; set; }
-            [J("locked_tags")] public object LockedTags { get; set; }
-            [J("md5")] public string Md5 { get; set; }
-            [J("parent_id")] public object ParentId { get; set; }
-            [J("preview_height")] public long PreviewHeight { get; set; }
-            [J("preview_url")] public string PreviewUrl { get; set; }
-            [J("preview_width")] public long PreviewWidth { get; set; }
-            [J("rating")] public string Rating { get; set; }
-            [J("sample_height")] public long SampleHeight { get; set; }
-            [J("sample_url")] public string SampleUrl { get; set; }
-            [J("sample_width")] public long SampleWidth { get; set; }
-            [J("score")] public long Score { get; set; }
-            [J("source")] public string Source { get; set; }
-            [J("sources")] public List<string> Sources { get; set; }
-            [J("status")] public string Status { get; set; }
-            [J("tags")] public string Tags { get; set; }
-            [J("width")] public long Width { get; set; }
-        }
+        [J("posts")] public List<Post> Posts { get; set; }
+    }
 
-        public class CreatedAt
-        {
-            [J("json_class")] public string JsonClass { get; set; }
-            [J("n")] public long N { get; set; }
-            [J("s")] public long S { get; set; }
-        }
-        
+    public class Post
+    {
+        [J("id")] public long Id { get; set; }
 
-        public class Converter
-        {
-            public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-            {
-                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-                DateParseHandling = DateParseHandling.None,
-            };
-        }
+        [J("created_at")] public DateTimeOffset CreatedAt { get; set; }
+
+        [J("updated_at")] public DateTimeOffset UpdatedAt { get; set; }
+
+        [J("file")] public File File { get; set; }
+
+        [J("preview")] public Preview Preview { get; set; }
+
+        [J("sample")] public Preview Sample { get; set; }
+
+        [J("score")] public Score Score { get; set; }
+
+        [J("tags")] public Tags Tags { get; set; }
+
+        [J("locked_tags")] public List<string> LockedTags { get; set; }
+
+        [J("change_seq")] public long ChangeSeq { get; set; }
+
+        [J("flags")] public Flags Flags { get; set; }
+
+        [J("rating")] public string Rating { get; set; }
+
+        [J("fav_count")] public long FavCount { get; set; }
+
+        [J("sources")] public List<Uri> Sources { get; set; }
+
+        [J("pools")] public List<object> Pools { get; set; }
+
+        [J("relationships")] public Relationships Relationships { get; set; }
+
+        [J("approver_id")] public long? ApproverId { get; set; }
+
+        [J("uploader_id")] public long UploaderId { get; set; }
+
+        [J("description")] public string Description { get; set; }
+
+        [J("comment_count")] public long CommentCount { get; set; }
+
+        [J("is_favorited")] public bool IsFavorited { get; set; }
+    }
+
+    public class File
+    {
+        [J("width")] public long Width { get; set; }
+
+        [J("height")] public long Height { get; set; }
+
+        [J("ext")] public string Ext { get; set; }
+
+        [J("size")] public long Size { get; set; }
+
+        [J("md5")] public string Md5 { get; set; }
+
+        [J("url")] public Uri Url { get; set; }
+    }
+
+    public class Flags
+    {
+        [J("pending")] public bool Pending { get; set; }
+
+        [J("flagged")] public bool Flagged { get; set; }
+
+        [J("note_locked")] public bool NoteLocked { get; set; }
+
+        [J("status_locked")] public bool StatusLocked { get; set; }
+
+        [J("rating_locked")] public bool RatingLocked { get; set; }
+
+        [J("deleted")] public bool Deleted { get; set; }
+    }
+
+    public class Preview
+    {
+        [J("width")] public long Width { get; set; }
+
+        [J("height")] public long Height { get; set; }
+
+        [J("url")] public Uri Url { get; set; }
+
+        [J("has", NullValueHandling = NullValueHandling.Ignore)]
+        public bool? Has { get; set; }
+    }
+
+    public class Relationships
+    {
+        [J("parent_id")] public long? ParentId { get; set; }
+
+        [J("has_children")] public bool HasChildren { get; set; }
+
+        [J("has_active_children")] public bool HasActiveChildren { get; set; }
+
+        [J("children")] public List<long> Children { get; set; }
+    }
+
+    public class Score
+    {
+        [J("up")] public long Up { get; set; }
+
+        [J("down")] public long Down { get; set; }
+
+        [J("total")] public long Total { get; set; }
+    }
+
+    public class Tags
+    {
+        [J("general")] public List<string> General { get; set; }
+
+        [J("species")] public List<string> Species { get; set; }
+
+        [J("character")] public List<string> Character { get; set; }
+
+        [J("copyright")] public List<string> Copyright { get; set; }
+
+        [J("artist")] public List<string> Artist { get; set; }
+
+        [J("invalid")] public List<string> Invalid { get; set; }
+
+        [J("lore")] public List<string> Lore { get; set; }
+
+        [J("meta")] public List<string> Meta { get; set; }
     }
 }
