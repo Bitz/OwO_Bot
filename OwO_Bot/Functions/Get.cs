@@ -19,7 +19,12 @@ namespace OwO_Bot.Functions
                 Config.reddit.client_id,
                 Config.reddit.secret_id,
                 Config.reddit.callback_url);
-            return new Reddit(webAgent, true);
+            var reddit = new Reddit(webAgent, true);
+
+            //Login to reddit
+            reddit.LogIn(Config.reddit.username, Config.reddit.password);
+
+            return reddit;
         }
 
         public static bool IsRunningOnMono()

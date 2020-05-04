@@ -32,10 +32,18 @@ namespace OwO_Bot.Functions
             return image;
         }
 
+        public static byte[] GetArrayFromUrl(string url)
+        {
+            WebRequest request = WebRequest.Create(url);
+            WebResponse response = request.GetResponse();
+            Stream responseStream = response.GetResponseStream();
+            return Convert.StreamToByte(responseStream); ;
+        }
+
         public static string FindThumbnail(string url)
         {
             string thumbUrl = string.Empty;
-            List<string> imageExtensions = new List<string> { ".png", ".jpg", ".jpeg" };
+            List<string> imageExtensions = new List<string> { ".png", ".jpg", ".jpeg", ".gifv" };
             string ext = Path.GetExtension(url);
             if (url.Contains("imgur.com") && imageExtensions.Contains(ext))
             {
@@ -154,9 +162,12 @@ namespace OwO_Bot.Functions
                     .Where(x => x.Attributes["property"]?.Value == "og:image" &&
                                 x.Attributes["property"].Value != null).ToList();
                 //Prefer any format vs gif
-                var first = ogImageNodes.First(x => x.Attributes["content"].Value.EndsWith(".jpg")
-                                                    || x.Attributes["content"].Value.EndsWith(".jpeg")
-                                                    || x.Attributes["content"].Value.EndsWith(".png"));
+                var first = ogImageNodes.First(x => 
+                    x.Attributes["content"].Value.EndsWith(".jpg")
+                    || x.Attributes["content"].Value.EndsWith(".jpg?play") //Gifv
+                    || x.Attributes["content"].Value.EndsWith(".jpeg")
+                    || x.Attributes["content"].Value.EndsWith(".png")
+                    );
                 resultUrl = first != null
                     ? first.Attributes["content"].Value
                     : ogImageNodes.First().Attributes["content"].Value;

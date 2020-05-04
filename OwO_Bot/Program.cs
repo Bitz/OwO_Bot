@@ -152,8 +152,6 @@ namespace OwO_Bot
             }
             Reddit reddit = Get.Reddit();
 
-            //Login to reddit
-            reddit.LogIn(Config.reddit.username, Config.reddit.password);
 
             if (reddit.User.FullName.ToLower() != Config.reddit.username.ToLower())
             {
@@ -286,7 +284,7 @@ namespace OwO_Bot
                 parsedSource = "No source provided";
             }
             
-            string parsede621Source =  $"[{requestSite} Source](https://{requestSite}.net/post/show/{imageToPost.Id})";
+            string parsede621Source =  $"[{requestSite} Source](https://{requestSite}.net/posts/{imageToPost.Id})";
 
             string creditsFooter;
             if (MailBasedTitle)
@@ -305,7 +303,7 @@ namespace OwO_Bot
                              "---" +
                              "\r\n" +
                              "\r\n" +
-                             $"Title by {creditsFooter} | This is a bot | [Discord](https://discordapp.com/invite/gz9sn7r) | [Twitter](https://twitter.com/club_flank) | [Report problems](/message/compose/?to=BitzLeon&subject={Uri.EscapeUriString($"OwO Bot {Constants.Version} post {post.Shortlink}")}) | [Source code](https://github.com/Bitz/OwO_Bot)";
+                             $"Title by {creditsFooter} | This is a bot | [Discord](https://discordapp.com/invite/gz9sn7r) | [Twitter](https://twitter.com/twisty_plot) | [Report problems](/message/compose/?to=BitzLeon&subject={Uri.EscapeUriString($"OwO Bot {Constants.Version} post {post.Url}")}) | [Source code](https://github.com/Bitz/OwO_Bot)";
 
             post.Comment(comment);
             request.RedditPostId = post.Id;
@@ -345,6 +343,12 @@ namespace OwO_Bot
             if (pictureExtensions.Contains(imageToPost.File.Ext))
             {
                 Upload.PostToImgur(ref request);
+            }
+            else if (animationExtensions.Contains(imageToPost.File.Ext) &&
+                     imageToPost.Tags.Meta.Any(x => x == "sound") ||
+                     imageToPost.Tags.Meta.Any(x => x == "long_playtime"))
+            {
+                Upload.PostToImgurAsVideo(ref request);
             }
             else if (animationExtensions.Contains(imageToPost.File.Ext))
             {

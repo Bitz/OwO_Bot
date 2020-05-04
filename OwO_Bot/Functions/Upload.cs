@@ -11,6 +11,8 @@ using Imgur.API.Endpoints.Impl;
 using Imgur.API.Models;
 using Newtonsoft.Json;
 using OwO_Bot.Models;
+using RedditSharp.Things;
+using RestSharp;
 using static OwO_Bot.Functions.Convert.ImageSize;
 using static OwO_Bot.Functions.Html;
 using static OwO_Bot.Models.Misc;
@@ -169,6 +171,33 @@ namespace OwO_Bot.Functions
                 }
             }
             return JsonConvert.DeserializeObject<Gfycat.Response.Token>(text).access_token;
+        }
+
+        public static void PostToImgurAsVideo(ref PostRequest model)
+        {
+            C.Write("Uploading to Imgur...");
+
+            var bytes = GetArrayFromUrl(model.RequestUrl);
+
+            var client = new RestClient("https://api.imgur.com/3/upload")
+            {
+                Timeout = 120000
+            };
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("Authorization", $"Client-ID {Constants.Config.imgur.apikey}");
+            request.AlwaysMultipartFormData = true;
+            var file = FileParameter.Create("video", bytes, "video");
+            request.Files.Add(file);
+            request.AddParameter("title", model.Title);
+            request.AddParameter("description", model.Description);
+            request.AddParameter("disable_audio", "0");
+            IRestResponse response = client.Execute(request);
+            ImgurResponse r = JsonConvert.DeserializeObject<ImgurResponse>(response.Content);
+
+            model.ResultUrl = $"{r.Data.Link.ToString().TrimEnd('.')}.gifv";
+            model.DeleteHash = r.Data.Deletehash;
+
+            C.WriteLineNoTime("Done!");
         }
     }
 }
