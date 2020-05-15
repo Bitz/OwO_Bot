@@ -192,6 +192,11 @@ namespace OwO_Bot.Functions
             request.AddParameter("description", model.Description);
             request.AddParameter("disable_audio", "0");
             IRestResponse response = client.Execute(request);
+            var res = int.Parse(response.StatusCode.ToString());
+            if (res >= 400 && res <= 499) {
+                throw new WebException("Bad result");
+            }
+
             ImgurResponse r = JsonConvert.DeserializeObject<ImgurResponse>(response.Content);
 
             model.ResultUrl = $"{r.Data.Link.ToString().TrimEnd('.')}.gifv";

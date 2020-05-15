@@ -143,9 +143,9 @@ namespace OwO_Bot
                 //Filetype filtering
                 searchObject = searchObject.Where(results => results.File.Ext != "swf").ToList();
                 //Hard filtering
-                searchObject = searchObject.Where(results => !TagsToHide.Any(tagsToHide => results.Tags.General.Contains(tagsToHide))).ToList();
+                searchObject = searchObject.Where(results => !TagsToHide.Any(tagsToHide => results.Tags.MasterList.Contains(tagsToHide))).ToList();
                 //Soft filtering
-                searchObject = searchObject.Where(results => !hideTags.Any(tagsToHide => results.Tags.General.Contains(tagsToHide))).ToList();
+                searchObject = searchObject.Where(results => !hideTags.Any(tagsToHide => results.Tags.MasterList.Contains(tagsToHide))).ToList();
                 //Blacklist filtering
                 searchObject = searchObject.Where(r => !blacklist.Select(x => x.PostId).Contains(r.Id)).ToList();
                 page++;
@@ -348,7 +348,14 @@ namespace OwO_Bot
                      imageToPost.Tags.Meta.Any(x => x == "sound") ||
                      imageToPost.Tags.Meta.Any(x => x == "long_playtime"))
             {
-                Upload.PostToImgurAsVideo(ref request);
+                try
+                {
+                    Upload.PostToImgurAsVideo(ref request);
+                }
+                catch (Exception)
+                {
+                    request.ResultUrl = request.RequestUrl;
+                }
             }
             else if (animationExtensions.Contains(imageToPost.File.Ext))
             {
