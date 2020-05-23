@@ -159,8 +159,7 @@ namespace OwO_Bot.Functions
             try
             {
                 List<HtmlNode> ogImageNodes = list
-                    .Where(x => x.Attributes["property"]?.Value == "og:image" &&
-                                x.Attributes["property"].Value != null).ToList();
+                    .Where(x => x.Attributes["property"]?.Value == "og:image" || x.Attributes["name"]?.Value == "twitter:image").ToList();
                 //Prefer any format vs gif
                 var first = ogImageNodes.First(x => 
                     x.Attributes["content"].Value.EndsWith(".jpg")
@@ -169,8 +168,8 @@ namespace OwO_Bot.Functions
                     || x.Attributes["content"].Value.EndsWith(".png")
                     );
                 resultUrl = first != null
-                    ? first.Attributes["content"].Value
-                    : ogImageNodes.First().Attributes["content"].Value;
+                    ? first.Attributes["content"].Value.TrimEnd("?play")
+                    : ogImageNodes.First().Attributes["content"].Value.TrimEnd("?play");
             }
             catch (Exception)
             {

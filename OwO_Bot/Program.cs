@@ -5,6 +5,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using ColorThiefDotNet;
 using Newtonsoft.Json;
@@ -266,70 +267,99 @@ namespace OwO_Bot
             }
 
             C.Write("Posting to Reddit...");
-            Post post = subreddit.SubmitPost(request.Title, request.ResultUrl);
-            if (request.IsNsfw)
+            try
             {
-                post.MarkNSFW();
+                Post post = subreddit.SubmitPost(request.Title, request.ResultUrl);
+                if (request.IsNsfw)
+                {
+                    post.MarkNSFW();
+                }
+                C.WriteLineNoTime("Done!");
+                request.DatePosted = DateTime.Now;
+                C.Write("Commenting on Post...");
+                string parsedSource;
+                if (imageToPost.Sources != null && imageToPost.Sources.Count > 0)
+                {
+                    parsedSource = $"[Original Source]({imageToPost.Sources.FirstOrDefault()})";
+                }
+                else
+                {
+                    parsedSource = "No source provided";
+                }
+
+                string parsede621Source = $"[{requestSite} Source](https://{requestSite}.net/posts/{imageToPost.Id})";
+
+                string creditsFooter;
+                if (MailBasedTitle)
+                {
+                    creditsFooter = !string.IsNullOrEmpty(EmailRecipient.username) ?
+                        $"/u/{EmailRecipient.username}" :
+                        "a helpful user";
+                }
+                else
+                {
+                    creditsFooter = "Artist";
+                }
+                string comment = $"{parsedSource} | {parsede621Source} " +
+                                 "\r\n" +
+                                 "\r\n" +
+                                 "---" +
+                                 "\r\n" +
+                                 "\r\n" +
+                                 $"Title by {creditsFooter} | This is a bot | [Discord](https://discordapp.com/invite/gz9sn7r) | [Twitter](https://twitter.com/twisty_plot) | [Report problems](/message/compose/?to=BitzLeon&subject={Uri.EscapeUriString($"OwO Bot {Constants.Version} post {post.Url}")}) | [Source code](https://github.com/Bitz/OwO_Bot)";
+
+                post.Comment(comment);
+                request.RedditPostId = post.Id;
+
+                Blacklist imageData = new Blacklist
+                {
+                    PostId = imageToPost.Id,
+                    CreatedDate = DateTime.Now,
+                    Subreddit = WorkingSub
+                };
+
+                try
+                {
+                    var colorThief = new ColorThief();
+                    string thumbUrl = Html.FindThumbnail(request.ResultUrl);
+                    Bitmap a = new Bitmap(Html.GetImageFromUrl(thumbUrl));
+                    request.ColorScheme = colorThief.GetColor(a).Color.ToHexString();
+                }
+                catch (Exception)
+                {
+                    //Ignore
+                }
+
+                //instate a reusable connection rather than a 1 off object.
+                using (DbConnector dbConnector = new DbConnector())
+                {
+                    //Saved to prevent rechecking.
+                    DbBlackList blacklistdb = new DbBlackList(dbConnector);
+                    blacklistdb.AddToBlacklist(imageData);
+
+                    //Saved for later use maybe.
+                    DbPosts dbPostsFinalSave = new DbPosts(dbConnector);
+                    dbPostsFinalSave.AddPostToDatabase(request);
+                }
             }
-            C.WriteLineNoTime("Done!");
-            request.DatePosted = DateTime.Now;
-            C.Write("Commenting on Post...");
-            string parsedSource;
-            if (imageToPost.Sources != null && imageToPost.Sources.Count > 0)
+            catch (DuplicateLinkException)
             {
-                parsedSource = $"[Original Source]({imageToPost.Sources.FirstOrDefault()})";
-            }
-            else
-            {
-                parsedSource = "No source provided";
-            }
-            
-            string parsede621Source =  $"[{requestSite} Source](https://{requestSite}.net/posts/{imageToPost.Id})";
+                using (DbConnector dbConnector = new DbConnector())
+                {
+                    Blacklist imageData = new Blacklist
+                    {
+                        PostId = imageToPost.Id,
+                        CreatedDate = DateTime.Now,
+                        Subreddit = WorkingSub
+                    };
 
-            string creditsFooter;
-            if (MailBasedTitle)
-            {
-                creditsFooter = !string.IsNullOrEmpty(EmailRecipient.username) ? 
-                    $"/u/{EmailRecipient.username}" : 
-                    "a helpful user";
-            }
-            else
-            {
-                creditsFooter = "Artist";
-            }
-            string comment = $"{parsedSource} | {parsede621Source} " +
-                             "\r\n" +
-                             "\r\n" +
-                             "---" +
-                             "\r\n" +
-                             "\r\n" +
-                             $"Title by {creditsFooter} | This is a bot | [Discord](https://discordapp.com/invite/gz9sn7r) | [Twitter](https://twitter.com/twisty_plot) | [Report problems](/message/compose/?to=BitzLeon&subject={Uri.EscapeUriString($"OwO Bot {Constants.Version} post {post.Url}")}) | [Source code](https://github.com/Bitz/OwO_Bot)";
+                    //Saved to prevent rechecking.
+                    DbBlackList blacklistdb = new DbBlackList(dbConnector);
+                    blacklistdb.AddToBlacklist(imageData);
+                }
 
-            post.Comment(comment);
-            request.RedditPostId = post.Id;
-
-            Blacklist imageData = new Blacklist
-            {
-                PostId = imageToPost.Id,
-                CreatedDate = DateTime.Now,
-                Subreddit = WorkingSub
-            };
-
-            var colorThief = new ColorThief();
-            string thumbUrl = Html.FindThumbnail(request.ResultUrl);
-            Bitmap a = new Bitmap(Html.GetImageFromUrl(thumbUrl));
-            request.ColorScheme = colorThief.GetColor(a).Color.ToHexString();
-
-            //instate a reusable connection rather than a 1 off object.
-            using (DbConnector dbConnector = new DbConnector())
-            {
-                //Saved to prevent rechecking.
-                DbBlackList blacklistdb = new DbBlackList(dbConnector);
-                blacklistdb.AddToBlacklist(imageData);
-
-                //Saved for later use maybe.
-                DbPosts dbPostsFinalSave = new DbPosts(dbConnector);
-                dbPostsFinalSave.AddPostToDatabase(request);
+                Process.Start(Assembly.GetExecutingAssembly().Location, Args.FirstOrDefault());
+                Environment.Exit(0);
             }
 
             C.WriteLineNoTime("Done!");
@@ -338,15 +368,14 @@ namespace OwO_Bot
         private static void UploadImage(P imageToPost, ref Misc.PostRequest request)
         {
             List<string> pictureExtensions = new List<string> { "jpg", "png", "jpeg" };
-            List<string> animationExtensions = new List<string> { "gif", "webm" };
+            List<string> animationExtensions = new List<string> { "webm" };
+            List<string> gifExtensions = new List<string> { "gif" };
             //Upload to either imgur or gyfcat depending on the type.
             if (pictureExtensions.Contains(imageToPost.File.Ext))
             {
                 Upload.PostToImgur(ref request);
             }
-            else if (animationExtensions.Contains(imageToPost.File.Ext) &&
-                     imageToPost.Tags.Meta.Any(x => x == "sound") ||
-                     imageToPost.Tags.Meta.Any(x => x == "long_playtime"))
+            else if (animationExtensions.Contains(imageToPost.File.Ext))
             {
                 try
                 {
@@ -357,9 +386,18 @@ namespace OwO_Bot
                     request.ResultUrl = request.RequestUrl;
                 }
             }
-            else if (animationExtensions.Contains(imageToPost.File.Ext))
+            else if (gifExtensions.Contains(imageToPost.File.Ext))
             {
-                Upload.PostToGfycat(ref request);
+                //Temp, until gfycat is back
+                //Upload.PostToGfycat(ref request);
+                if (imageToPost.File.Size <= 10485760)
+                {
+                    Upload.PostToImgurAsGif(ref request);
+                }
+                else
+                {
+                    request.ResultUrl = request.RequestUrl;
+                }
             }
         }
 

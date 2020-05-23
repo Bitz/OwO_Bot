@@ -50,7 +50,7 @@ namespace OwO_Bot.Models
 
         //[J("uploader_id")] public long UploaderId { get; set; }
 
-        //[J("description")] public string Description { get; set; }
+        [J("description")] public string Description { get; set; }
 
         //[J("comment_count")] public long CommentCount { get; set; }
 

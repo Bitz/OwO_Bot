@@ -173,7 +173,40 @@ namespace OwO_Bot.Functions
             return JsonConvert.DeserializeObject<Gfycat.Response.Token>(text).access_token;
         }
 
-        public static void PostToImgurAsVideo(ref PostRequest model)
+        public static void PostToImgurAsGif(ref PostRequest model)
+        {
+            C.Write("Uploading to Imgur...");
+
+            var bytes = GetArrayFromUrl(model.RequestUrl);
+
+            var client = new RestClient("https://api.imgur.com/3/upload")
+            {
+                Timeout = 60000
+            };
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("Authorization", $"Client-ID {Constants.Config.imgur.apikey}");
+            request.AlwaysMultipartFormData = true;
+            request.AddParameter("image", model.RequestUrl);
+            request.AddParameter("title", model.Title);
+            request.AddParameter("description", model.Description);
+            request.AddParameter("disable_audio", "0");
+            IRestResponse response = client.Execute(request);
+            var res = (int)response.StatusCode;
+            if (res >= 400 && res <= 499)
+            {
+                throw new WebException("Bad result");
+            }
+
+            ImgurResponse r = JsonConvert.DeserializeObject<ImgurResponse>(response.Content);
+
+            model.ResultUrl = $"{r.Data.Link}v";
+            model.DeleteHash = r.Data.Deletehash;
+
+            C.WriteLineNoTime("Done!");
+        }
+    
+
+    public static void PostToImgurAsVideo(ref PostRequest model)
         {
             C.Write("Uploading to Imgur...");
 
@@ -192,7 +225,7 @@ namespace OwO_Bot.Functions
             request.AddParameter("description", model.Description);
             request.AddParameter("disable_audio", "0");
             IRestResponse response = client.Execute(request);
-            var res = int.Parse(response.StatusCode.ToString());
+            var res = (int) response.StatusCode;
             if (res >= 400 && res <= 499) {
                 throw new WebException("Bad result");
             }
