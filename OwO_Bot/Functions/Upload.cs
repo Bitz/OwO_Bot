@@ -177,7 +177,7 @@ namespace OwO_Bot.Functions
         {
             C.Write("Uploading to Imgur...");
 
-            var bytes = GetArrayFromUrl(model.RequestUrl);
+            //var bytes = GetArrayFromUrl(model.RequestUrl);
 
             var client = new RestClient("https://api.imgur.com/3/upload")
             {
@@ -187,12 +187,13 @@ namespace OwO_Bot.Functions
             request.AddHeader("Authorization", $"Client-ID {Constants.Config.imgur.apikey}");
             request.AlwaysMultipartFormData = true;
             request.AddParameter("image", model.RequestUrl);
+            request.AddParameter("type", "url");
             request.AddParameter("title", model.Title);
             request.AddParameter("description", model.Description);
             request.AddParameter("disable_audio", "0");
             IRestResponse response = client.Execute(request);
             var res = (int)response.StatusCode;
-            if (res >= 400 && res <= 499)
+            if (res != 200)
             {
                 throw new WebException("Bad result");
             }

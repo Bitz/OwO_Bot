@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using OwO_Bot.Models;
 using RedditSharp;
@@ -74,10 +75,10 @@ namespace OwO_Bot.Functions
            new Dictionary<string, string>
            {
                 {"male", "M"},
-                {"dickgirl", "D"},
-                {"gynomorph", "D"},
-                {"cuntboy", "C"},
-                {"andromorph", "C"},
+                {"dickgirl", "G"},
+                {"gynomorph", "G"},
+                {"cuntboy", "A"},
+                {"andromorph", "A"},
                 {"female", "F"},
                 {"maleherm", "H"},
                 {"herm", "H"},
@@ -124,7 +125,7 @@ namespace OwO_Bot.Functions
             {
                 genderGroupings = genderList.Count == 0 ? "MF" : string.Join("", genderList);
             }
-            return genderGroupings;
+            return genderGroupings.Replace("FM", "MF");
         }
 
 
@@ -173,14 +174,18 @@ namespace OwO_Bot.Functions
                 "character",
                 "page", "pg",
                 "/", "\\",
-                "(", ")",
-                "[", "]",
                 ":", ";",
                 "|", "#",
                 "&", "<",
                 ">", "system error",
                 "collab"
             };
+
+            //Remove things in () and []
+            returnedTitle = Regex.Replace(returnedTitle, @"\(.*?\)", "");
+
+            returnedTitle = Regex.Replace(returnedTitle, @"\[.*?\]", "");
+
 
             if (!string.IsNullOrEmpty(returnedTitle) && ! unapprovedTitleElements.Any(x => returnedTitle.ToLower().Contains(x)))
             {
