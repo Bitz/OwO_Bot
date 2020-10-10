@@ -34,10 +34,14 @@ namespace OwO_Bot.Functions
 
         public static byte[] GetArrayFromUrl(string url)
         {
+            return Convert.StreamToByte(GetStreamFromUrl(url)); ;
+        }
+
+        public static Stream GetStreamFromUrl(string url)
+        {
             WebRequest request = WebRequest.Create(url);
             WebResponse response = request.GetResponse();
-            Stream responseStream = response.GetResponseStream();
-            return Convert.StreamToByte(responseStream); ;
+            return response.GetResponseStream();
         }
 
         public static string FindThumbnail(string url)

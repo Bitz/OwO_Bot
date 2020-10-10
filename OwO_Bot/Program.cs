@@ -22,11 +22,15 @@ using C = OwO_Bot.Functions.C;
 using F = OwO_Bot.Functions;
 using P = OwO_Bot.Models.Post;
 using Post = RedditSharp.Things.Post;
+using System.Net.Http;
 
 namespace OwO_Bot
 {
     class Program
     {
+        public static WebClient WebClient;
+        public static HttpClient HttpClient;
+
         static void Main(string[] args)
         {
             Title = "OwO What's This? Loading bulge...";
@@ -104,10 +108,13 @@ namespace OwO_Bot
             C.WriteLine($"Running for /r/{subConfig.subreddit}!");
 
             string saveTags = $"{subConfig.tags} date:>={DateTime.Now.AddDays(-1):yyyy-MM-dd}";
-            WebClient client = new WebClient
+
+            WebClient = new WebClient
             {
                 Headers = { ["User-Agent"] = $"OwO Bot/{Constants.Version} (by BitzLeon on Reddit)" }
             };
+            HttpClient = new HttpClient();
+            HttpClient.DefaultRequestHeaders.Add("User-Agent", $"OwO Bot/{Constants.Version} (by BitzLeon on Reddit)");
 
             int page = 1;
             List<P> searchObject = new List<P>();
@@ -122,7 +129,7 @@ namespace OwO_Bot
                 string result = string.Empty;
                 try
                 {
-                    result = client.DownloadString($"https://{requestSite}.net/posts.json?tags={saveTags}&limit=50&page=" + page);
+                    result = WebClient.DownloadString($"https://{requestSite}.net/posts.json?tags={saveTags}&limit=50&page=" + page);
                 }
                 catch (WebException)
                 {

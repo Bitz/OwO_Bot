@@ -33,6 +33,8 @@ namespace OwO_Bot.Functions
             return Type.GetType("Mono.Runtime") != null;
         }
 
+
+
         public class RedditPost
         {
             public static string GetUrl(Models.Hashing.ImgHash image)
