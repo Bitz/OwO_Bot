@@ -16,25 +16,33 @@ namespace OwO_Bot.Functions
     {
         public static Image GetImageFromUrl(string url)
         {
-            WebRequest request = WebRequest.Create(url);
-            WebResponse response = request.GetResponse();
-            Stream responseStream = response.GetResponseStream();
-            Image image;
             try
             {
-                image = Image.FromStream(responseStream);
+                WebRequest request = WebRequest.Create(url);
+                WebResponse response = request.GetResponse();
+                Stream responseStream = response.GetResponseStream();
+                Image image;
+                try
+                {
+                    image = Image.FromStream(responseStream);
+                }
+                catch (Exception)
+                {
+                    //Fallback to getting image from this
+                    image = GetVideoFirstFrameFromUrl(url);
+                }
+
+                return image;
             }
-            catch (Exception)
+            catch (WebException)
             {
-                //Fallback to getting image from this
-                image = GetVideoFirstFrameFromUrl(url);
+                return null;
             }
-            return image;
         }
 
         public static byte[] GetArrayFromUrl(string url)
         {
-            return Convert.StreamToByte(GetStreamFromUrl(url)); ;
+            return Convert.StreamToByte(GetStreamFromUrl(url)); 
         }
 
         public static Stream GetStreamFromUrl(string url)
@@ -67,7 +75,18 @@ namespace OwO_Bot.Functions
             C.WriteNoTime("Converting image with ffmpeg...");
             string location = GetExecutingAssembly().Location;
             string absoluteCurrentDirectory = Path.GetDirectoryName(location);
-            string thumbLocation = Path.Combine(absoluteCurrentDirectory, "temp.png");
+
+            var files = Directory.GetFiles(absoluteCurrentDirectory, "temp_*.png");
+
+            if (files.Length > 0)
+            {
+                foreach (var file in files)
+                {
+                    File.Delete(file);
+                }
+            }
+
+            string thumbLocation = Path.Combine(absoluteCurrentDirectory, $"temp_{Guid.NewGuid()}.png");
             string ffmpegLocation = Path.Combine(absoluteCurrentDirectory, "ffmpeg.exe");
             var cmd = $"-loglevel quiet -y -i \"{video}\" -vframes 1 -s {PixelSize}x{PixelSize} \"{thumbLocation}\"";
             var calculatedffmpegPath = IsRunningOnMono() ? "/usr/bin/ffmpeg" : ffmpegLocation;

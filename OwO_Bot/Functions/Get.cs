@@ -160,6 +160,12 @@ namespace OwO_Bot.Functions
                             returnedTitle = Html.Title.SplitBy(returnedTitle);
                             break;
                         }
+                        if (s.Contains("newgrounds.com") && s.Contains("/view/"))
+                        {
+                            returnedTitle = Html.Title.GetTitle(s);
+                            returnedTitle = Html.Title.SplitBy(returnedTitle);
+                            break;
+                        }
                     }
                     catch (Exception e)
                     {

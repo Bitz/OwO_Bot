@@ -9,7 +9,7 @@ namespace OwO_Bot.Functions
 {
     class Hashing
     {
-        static readonly List<string> GoodExtensions = new List<string> { ".jpg", ".png", ".gif", ".jepg" };
+        static readonly List<string> GoodExtensions = new List<string> { ".jpg", ".png", ".gif", ".jepg", ".webm" };
 
         public static Models.Hashing.ImgHash FromPost(Post post)
         {
@@ -27,6 +27,10 @@ namespace OwO_Bot.Functions
             if (response.IsValid)
             {
                 response.ImageHash = GetHash(response.Url);
+                if (response.ImageHash == null || response.ImageHash.Length == 0)
+                {
+                    response.IsValid = false;
+                }
             }
             response.CreatedDate = DateTime.Now;
             return response;
@@ -46,16 +50,24 @@ namespace OwO_Bot.Functions
                 //11% faster to do it this way, so when possible, use this method to generate thumbs instead.
                 image = Html.GetImageFromUrl(url);
             }
-            Bitmap bmpMin = new Bitmap(image, new Size(Constants.PixelSize, Constants.PixelSize));
-            for (int j = 0; j < bmpMin.Height; j++)
-            {
-                for (int i = 0; i < bmpMin.Width; i++)
-                {
-                    lByte.Add(bmpMin.GetPixel(i, j).GetBrightness() < 0.5f ? (byte)0x1 : (byte)0x0);
-                }
-            }
 
-            return lByte.ToArray();
+            if (image != null)
+            {
+                Bitmap bmpMin = new Bitmap(image, new Size(Constants.PixelSize, Constants.PixelSize));
+                for (int j = 0; j < bmpMin.Height; j++)
+                {
+                    for (int i = 0; i < bmpMin.Width; i++)
+                    {
+                        lByte.Add(bmpMin.GetPixel(i, j).GetBrightness() < 0.5f ? (byte)0x1 : (byte)0x0);
+                    }
+                }
+
+                return lByte.ToArray();
+            }
+            else
+            {
+                return null;
+            }
         }
 
         

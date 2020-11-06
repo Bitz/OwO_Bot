@@ -195,9 +195,12 @@ namespace OwO_Bot
                 timer.Start();
                 Write($"Working on {newPost.Id}...");
                 ImgHash thisPair = F.Hashing.FromPost(newPost);
-                if (dbSubredditConnection.AddPostToDatabase(thisPair))
+                if (thisPair.IsValid)
                 {
-                    C.WriteLineNoTime("Added to database...");
+                    if (dbSubredditConnection.AddPostToDatabase(thisPair))
+                    {
+                        C.WriteLineNoTime("Added to database...");
+                    }
                 }
                 timer.Stop();
                 C.WriteLineNoTime($"Done in {timer.ElapsedMilliseconds}ms!");
@@ -395,7 +398,7 @@ namespace OwO_Bot
             }
             else if (gifExtensions.Contains(imageToPost.File.Ext))
             {
-                //Temp, until gfycat is back
+
                 //Upload.PostToGfycat(ref request);
                 if (imageToPost.File.Size <= 10485760)
                 {
@@ -403,7 +406,14 @@ namespace OwO_Bot
                 }
                 else
                 {
-                    request.ResultUrl = request.RequestUrl;
+                    try
+                    {
+                        Upload.PostToImgurAsVideo(ref request);
+                    }
+                    catch (Exception)
+                    {
+                        request.ResultUrl = request.RequestUrl;
+                    }
                 }
             }
         }

@@ -85,7 +85,7 @@ namespace OwO_Bot.Functions
         }
 
 
-        public static string BytesToReadableString(Int64 value, int decimalPlaces = 1)
+        public static string BytesToReadableString(long value, int decimalPlaces = 1)
         {
             string[] sizeSuffixes =
                 {"bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
@@ -127,34 +127,34 @@ namespace OwO_Bot.Functions
 
         public static class ImageSize
         {
-            public static Bitmap GetSpecificSize(Bitmap image, long requestedSize, bool tryJpegConvert = false)
+            public static Image GetSpecificSize(Image image, long requestedSize, bool tryJpegConvert = false)
             {
                 //We will try to convert the image to a jpeg before manually resizing it, if that is enough to get it 
                 //Below the requestedSize, we return null, to process the conversion as another path.
                 if (tryJpegConvert)
                 {
-                    if (GetImageSizeAsJpeg(image) < requestedSize)
+                    if (GetImageSizeAsJpeg(image).Length < requestedSize)
                     {
                         return null;
                     }
                 }
                 long resizedImageSize = GetImageSize(image);
-                Bitmap resizedBitmap = image;
+                Image resizedImage = image;
                 float steps = 10;
                 double widthReduction = image.Width * (steps / 100);
                 double heightReduction =  image.Height * (steps / 100);
                 while (resizedImageSize > requestedSize)
                 {
-                    int width = resizedBitmap.Width - (int) widthReduction;
-                    int height = resizedBitmap.Height - (int) heightReduction;
-                    resizedBitmap = ResizeImage(resizedBitmap, width, height);
-                    resizedImageSize = GetImageSize(resizedBitmap);
+                    int width = resizedImage.Width - (int) widthReduction;
+                    int height = resizedImage.Height - (int) heightReduction;
+                    resizedImage = ResizeImage(resizedImage, width, height);
+                    resizedImageSize = GetImageSize(resizedImage);
                 }
 
-                return resizedBitmap;
+                return resizedImage;
             }
 
-            private static Bitmap ResizeImage(Bitmap image, int width, int height)
+            private static Image ResizeImage(Image image, int width, int height)
             {
                 var destImage = new Bitmap(width, height);
                 using (var graphics = Graphics.FromImage(destImage))
@@ -167,7 +167,7 @@ namespace OwO_Bot.Functions
                 return destImage;
             }
 
-            private static long GetImageSize(Bitmap image)
+            private static long GetImageSize(Image image)
             {
                 long maxByteSize;
                 using (var ms = new MemoryStream())
@@ -178,15 +178,14 @@ namespace OwO_Bot.Functions
                 return maxByteSize;
             }
 
-            private static long GetImageSizeAsJpeg(Bitmap image)
+            private static byte[] GetImageSizeAsJpeg(Image image)
             {
-                long maxByteSize;
-                using (var ms = new MemoryStream())
+                MemoryStream ms;
+                using (ms = new MemoryStream())
                 {
                     image.Save(ms, ImageFormat.Jpeg);
-                    maxByteSize = ms.Length;
                 }
-                return maxByteSize;
+                return ms.ToArray();
             }
         }
 
