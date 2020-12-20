@@ -91,6 +91,7 @@
     <Compile Include="Functions\Html.cs" />
     <Compile Include="Functions\Logging.cs" />
     <Compile Include="Functions\Mail.cs" />
+    <Compile Include="Functions\Retry.cs" />
     <Compile Include="Functions\Upload.cs" />
     <Compile Include="Models\Blacklist.cs" />
     <Compile Include="Models\Config.cs" />

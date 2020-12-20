@@ -131,7 +131,7 @@ namespace OwO_Bot.Functions
             {
                 using (HttpClient client = new HttpClient())
                 {
-                    HttpWebRequest request = (HttpWebRequest) WebRequest.Create("https://weblogin.redgifs.com/oauth/weblogin");
+                    HttpWebRequest request = (HttpWebRequest) WebRequest.Create("https://api.gfycat.com/v1/gfycats");
                     request.Method = WebRequestMethods.Http.Post;
                     request.Accept = "application/json";
                     request.UserAgent = "curl/7.37.0";
@@ -198,7 +198,7 @@ namespace OwO_Bot.Functions
 
             }
 
-            model.ResultUrl = $"https://redgifs.com/{result.gfyname}";
+            model.ResultUrl = $"https://gfycat.com/{result.gfyname}";
             C.WriteLineNoTime("Done!");
         }
 
@@ -206,7 +206,7 @@ namespace OwO_Bot.Functions
         private static string GetGfycatToken()
         {
             string j = "application/json";
-            HttpWebRequest request = (HttpWebRequest) WebRequest.Create("https://weblogin.redgifs.com/oauth/weblogin");
+            HttpWebRequest request = (HttpWebRequest) WebRequest.Create("https://api.gfycat.com/v1/oauth/token");
             request.Method = WebRequestMethods.Http.Post;
             request.Accept = j;
             request.UserAgent = "curl/7.37.0";

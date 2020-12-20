@@ -398,13 +398,11 @@ namespace OwO_Bot
             }
             else if (gifExtensions.Contains(imageToPost.File.Ext))
             {
-
-                //Upload.PostToGfycat(ref request);
-                if (imageToPost.File.Size <= 10485760)
+                try
                 {
                     Upload.PostToImgurAsGif(ref request);
                 }
-                else
+                catch (Exception)
                 {
                     try
                     {
@@ -415,6 +413,28 @@ namespace OwO_Bot
                         request.ResultUrl = request.RequestUrl;
                     }
                 }
+                //if (imageToPost.File.Size <= 10485760)
+                //{
+                //    Upload.PostToGfycat(ref request);
+                //}
+                //else
+                //{
+                //    try
+                //    {
+                //        Upload.PostToImgurAsGif(ref request);
+                //    }
+                //    catch (Exception)
+                //    {
+                //        try
+                //        {
+                //            Upload.PostToImgurAsVideo(ref request);
+                //        }
+                //        catch (Exception )
+                //        {
+                //            request.ResultUrl = request.RequestUrl;
+                //        }
+                //    }
+                //}
             }
         }
 

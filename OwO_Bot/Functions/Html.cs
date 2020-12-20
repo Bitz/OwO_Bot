@@ -18,7 +18,8 @@ namespace OwO_Bot.Functions
         {
             try
             {
-                WebRequest request = WebRequest.Create(url);
+                HttpWebRequest request = (HttpWebRequest) WebRequest.Create(url);
+                request.UserAgent = "Mozilla / 5.0(Windows NT 10.0; WOW64) AppleWebKit / 537.36(KHTML, like Gecko) Chrome / 86.0.4240.183 Safari / 537.36";
                 WebResponse response = request.GetResponse();
                 Stream responseStream = response.GetResponseStream();
                 Image image;
@@ -76,13 +77,13 @@ namespace OwO_Bot.Functions
             string location = GetExecutingAssembly().Location;
             string absoluteCurrentDirectory = Path.GetDirectoryName(location);
 
-            var files = Directory.GetFiles(absoluteCurrentDirectory, "temp_*.png");
+            var files = Directory.GetFiles(absoluteCurrentDirectory, "temp*.png");
 
             if (files.Length > 0)
             {
                 foreach (var file in files)
                 {
-                    File.Delete(file);
+                    Retry.Do(() => File.Delete(file));
                 }
             }
 
@@ -109,7 +110,10 @@ namespace OwO_Bot.Functions
                 process.WaitForExit(100);
             }
             C.WriteLineNoTime("Done!");
-            return Image.FromFile(thumbLocation);
+            using (FileStream stream = new FileStream(thumbLocation, FileMode.Open, FileAccess.Read))
+            {
+                return Image.FromStream(stream);
+            }
         }
 
         public static string FetchHtml(string url)
@@ -118,9 +122,9 @@ namespace OwO_Bot.Functions
 
             try
             {
-                HttpWebRequest oReq = (HttpWebRequest)WebRequest.Create(url);
-                oReq.UserAgent = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
-                HttpWebResponse resp = (HttpWebResponse)oReq.GetResponse();
+                HttpWebRequest oReq = (HttpWebRequest) WebRequest.Create(url);
+                oReq.UserAgent = "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36";
+                HttpWebResponse resp = (HttpWebResponse) oReq.GetResponse();
                 Stream stream = resp.GetResponseStream();
                 if (stream != null)
                 {
@@ -130,7 +134,7 @@ namespace OwO_Bot.Functions
             }
             catch (Exception)
             {
-                // ignored
+                //Ignore
             }
 
             return htmlBody;
@@ -177,6 +181,14 @@ namespace OwO_Bot.Functions
             string html = FetchHtml(url);
             HtmlDocument doc = new HtmlDocument();
             doc.LoadHtml(html);
+
+            if (url.Contains("reddit.com/gallery/"))
+            {
+                var images = doc.DocumentNode.SelectNodes("//img").Where(x => x.Attributes["src"]?.Value != null);
+                var imageUrl = images.FirstOrDefault(x => x.Attributes["src"].Value.StartsWith("https://preview.redd.it/"))?.Attributes["src"].Value;
+                return imageUrl;
+            }
+
             HtmlNodeCollection list = doc.DocumentNode.SelectNodes("//meta");
             if (list == null) return string.Empty;
             try
@@ -184,7 +196,7 @@ namespace OwO_Bot.Functions
                 List<HtmlNode> ogImageNodes = list
                     .Where(x => x.Attributes["property"]?.Value == "og:image" || x.Attributes["name"]?.Value == "twitter:image").ToList();
                 //Prefer any format vs gif
-                var first = ogImageNodes.First(x => 
+                var first = ogImageNodes.FirstOrDefault(x => 
                     x.Attributes["content"].Value.EndsWith(".jpg")
                     || x.Attributes["content"].Value.EndsWith(".jpg?play") //Gifv
                     || x.Attributes["content"].Value.EndsWith(".jpeg")

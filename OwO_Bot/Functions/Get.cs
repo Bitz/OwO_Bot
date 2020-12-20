@@ -37,6 +37,7 @@ namespace OwO_Bot.Functions
 
         public class RedditPost
         {
+
             public static string GetUrl(Models.Hashing.ImgHash image)
             {
                 return $"https://reddit.com/r/{image.SubReddit}/comments/{image.PostId}";
@@ -176,6 +177,7 @@ namespace OwO_Bot.Functions
             }
             //If we find any of these things in the title, we are still going to send the email because we consider the title "bad"
             List<string> unapprovedTitleElements = new List<string> {
+                "login" ,
                 "commission" ,
                 "comm",
                 "ych",
